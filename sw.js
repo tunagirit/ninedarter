@@ -1,5 +1,5 @@
 // ninedarter service worker — network-first app shell (always revalidated), offline fallback, runtime cache for fonts.
-const VERSION = 'nd-v1.0.2a';
+const VERSION = 'nd-v1.0.2a-r2';
 const FONTS = 'nd-fonts';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css', './icons/icon.svg',
@@ -33,8 +33,15 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== location.origin) return;
   // App shell: network first and always revalidated with the server (cache: 'no-cache'),
   // so a new deploy shows up on the next load; the cached copy is only used offline.
-  e.respondWith(fetch(req, { cache: 'no-cache' }).then((r) => {
-    if (r.ok) { const copy = r.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
-    return r;
-  }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html'))));
+  // A transient server error (e.g. 503 from the CDN) is retried once, then the cached copy is used.
+  e.respondWith((async () => {
+    try {
+      let r = await fetch(req, { cache: 'no-cache' });
+      if (r.status >= 500) r = await fetch(req, { cache: 'no-cache' }).catch(() => r);
+      if (r.ok) { const copy = r.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); return r; }
+      return (await caches.match(req)) || r;
+    } catch {
+      return (await caches.match(req)) || (await caches.match('./index.html')) || Response.error();
+    }
+  })());
 });
