@@ -11,10 +11,15 @@ const defaults = () => ({
     lang: (navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en',
     caller: true, callerVoice: '', vibrate: true, askDoubles: true, hints: true, inputMode: 'keypad', botSpeed: 900,
   },
-  players: [],
+  // the person using this device ("me"); linked to an account after sign-in
+  profile: { localId: uid(), name: '', photo: null, hue: 285, shape: 'cookie', linked: false },
+  players: [], // offline player database
   matches: [],
   active: null,
   lastSetup: {},
+  account: null, // {uid, email, username, avatar}
+  friends: [], friendReqs: [],
+  cloud: {},
 });
 
 function load() {
@@ -23,11 +28,21 @@ function load() {
     if (!raw) return defaults();
     const d = JSON.parse(raw);
     const def = defaults();
-    return { ...def, ...d, settings: { ...def.settings, ...(d.settings || {}) } };
+    return { ...def, ...d, settings: { ...def.settings, ...(d.settings || {}) }, profile: { ...def.profile, ...(d.profile || {}) }, cloud: {} };
   } catch { return defaults(); }
 }
 
 let state = load();
+try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+
+/** The local user as a game participant. */
+export function mePlayer(s = state) {
+  const p = s.profile;
+  const name = s.account?.username || p.name || (s.settings.lang === 'tr' ? 'Ben' : 'Me');
+  return { id: s.account?.uid || p.localId, name, hue: p.hue, shape: p.shape, photo: s.account?.avatar || p.photo || null, kind: 'me' };
+}
+export const friendPlayer = (f) => ({ id: f.id, name: f.name, hue: Math.round(parseInt(f.id.slice(0, 2), 16) * 1.4), shape: 'flower', photo: f.photo || null, kind: 'friend' });
+export const offlinePlayer = (p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, photo: p.photo || null, kind: 'offline' });
 const subs = new Set();
 
 function save() {

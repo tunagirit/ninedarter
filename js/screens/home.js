@@ -20,7 +20,7 @@ export function Home() {
 
   const quick = (start) => {
     const last = st.lastSetup.x01;
-    if (!last || !st.players.length) return go('#/play/x01');
+    if (!last) return go('#/play/x01');
     startMatch('x01', { ...last, start });
   };
 

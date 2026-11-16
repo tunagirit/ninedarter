@@ -60,6 +60,7 @@ function finishMatch(st) {
   };
   update((s) => { s.matches = [rec, ...s.matches.filter((m) => m.id !== rec.id)]; s.active = null; });
   setTimeout(() => go('#/result/' + rec.id), 650);
+  if (getState().account) import('./cloud.js').then((c) => c.syncMatches()).catch(() => {});
 }
 
 export function abandonMatch() {
@@ -75,6 +76,7 @@ export function rematch(rec) {
 }
 
 export function deleteMatch(id) {
+  import('./cloud.js').then((c) => c.deleteRemoteMatch(id)).catch(() => {});
   update((s) => { s.matches = s.matches.filter((m) => m.id !== id); });
 }
 

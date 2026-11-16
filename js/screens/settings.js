@@ -4,6 +4,7 @@ import { t } from '../i18n.js';
 import { Icon, Btn, Seg, Switch, Slider, confirmDialog, snack } from '../ui.js';
 import { availableVoices, speak } from '../voice.js';
 import { TopBar } from './common.js';
+import { OfflinePlayers } from './players.js';
 
 const HUES = [285, 320, 350, 25, 60, 110, 150, 180, 220, 250];
 
@@ -65,6 +66,10 @@ export function Settings() {
         <${Seg} size="s" value=${s.botSpeed} onChange=${(v) => set('botSpeed', v)} options=${[{ value: 1600, label: t('settings.slow') }, { value: 900, label: t('settings.normal') }, { value: 300, label: t('settings.fast') }]} /></div>
     </div>
 
+    <div class="title-m section-title" style="margin:8px 4px 0">${t('settings.offlinePlayers')}</div>
+    <div class="body-s muted" style="margin:-4px 4px 0">${t('settings.offlinePlayersSub')}</div>
+    <${OfflinePlayers} />
+
     <div class="title-m section-title" style="margin:8px 4px 0">${t('settings.data')}</div>
     <div class="list">
       <${Row} icon="download" title=${t('settings.export')} sub=${t('settings.exportSub')}><${Btn} kind="tonal" size="s" onClick=${doExport}>${t('settings.exportBtn')}<//><//>
@@ -74,7 +79,7 @@ export function Settings() {
 
     <div class="card stack s" style="align-items:center;text-align:center;margin-top:8px">
       <span class="brand-word">nine<b>darter</b></span>
-      <span class="body-m muted">v1.0.0 · ${t('settings.about')}</span>
+      <span class="body-m muted">v1.0.1 · ${t('settings.about')}</span>
       <a class="btn text s" href="https://github.com/tunagirit/ninedarter" id="gh-link" target="_blank" rel="noopener"><${Icon} n="code" />GitHub</a>
     </div>
   </div>`;

@@ -1,21 +1,88 @@
 import { html, useState } from '../../vendor/preact-htm.js';
-import { useStore, update } from '../store.js';
+import { useStore, mePlayer, friendPlayer, offlinePlayer } from '../store.js';
 import { t } from '../i18n.js';
-import { Icon, IconBtn, Btn, Seg, Switch, Slider, Avatar, snack } from '../ui.js';
+import { Icon, IconBtn, Btn, Seg, Switch, Slider, Avatar, snack, openDialog, haptic } from '../ui.js';
 import { startMatch, playerFromBot } from '../match.js';
 import { BOT_LEVELS } from '../bot.js';
-import { TopBar, Stepper, PlayerPicker } from './common.js';
+import { TopBar, Stepper } from './common.js';
+import { newOfflinePlayerDialog } from './players.js';
+import { cloudEnabled } from '../cloud.js';
 
 const SUPPORTS_BOT = { x01: true, cricket: true };
 const MAX_PLAYERS = { x01: 8, cricket: 4, atc: 8, bobs27: 8, checkout: 1 };
+const KIND_ICON = { me: 'person', friend: 'cloud', offline: 'person_outline', bot: 'smart_toy' };
+
+/** Rebuild a roster entry from a saved snapshot, against current data (drops unknown players). */
+function resolve(p, st) {
+  const me = mePlayer(st);
+  if (p.bot) return playerFromBot(p.bot);
+  if (p.kind === 'me' || p.id === me.id || p.id === st.profile.localId) return me;
+  const off = st.players.find((x) => x.id === p.id);
+  if (off) return offlinePlayer(off);
+  const fr = st.friends.find((x) => x.id === p.id);
+  if (fr) return friendPlayer(fr);
+  return null;
+}
+
+function addPlayersDialog({ st, roster, room, allowBot }) {
+  return openDialog((close) => {
+    const Inner = () => {
+      const s = useStore();
+      const [picked, setPicked] = useState([]);
+      const [tab, setTab] = useState(s.friends.length ? 'friends' : 'offline');
+      const [lv, setLv] = useState(5);
+      const me = mePlayer(s);
+      const taken = new Set([...roster, ...picked].map((p) => p.id));
+      const left = room - picked.length;
+      const pick = (p) => { if (left <= 0) return snack(t('setup.full')); haptic(10); setPicked([...picked, p]); };
+      const unpick = (id) => setPicked(picked.filter((p) => p.id !== id));
+      const Row = ({ p, sub }) => {
+        const on = picked.some((x) => x.id === p.id);
+        return html`<button class=${'pick-row' + (on ? ' on' : '')} onClick=${() => (on ? unpick(p.id) : pick(p))}>
+          <${Avatar} p=${p} size="l" /><div class="grow"><div class="title-m">${p.name}</div>${sub && html`<div class="body-s muted">${sub}</div>`}</div>
+          <span class="pick-check"><${Icon} n=${on ? 'check' : 'add'} /></span>
+        </button>`;
+      };
+      const offline = s.players.map(offlinePlayer).filter((p) => !roster.some((r) => r.id === p.id));
+      const friends = s.friends.map(friendPlayer).filter((p) => !roster.some((r) => r.id === p.id));
+      const tabs = [
+        { value: 'friends', label: t('setup.tabFriends'), icon: 'cloud' },
+        { value: 'offline', label: t('setup.tabOffline'), icon: 'person_outline' },
+        ...(allowBot ? [{ value: 'bot', label: t('setup.bot'), icon: 'smart_toy' }] : []),
+      ];
+      return html`<div class="row between"><div class="headline-s">${t('setup.addPlayers')}</div><span class="badge">${t('setup.slotsLeft', { n: left })}</span></div>
+        ${!roster.some((r) => r.id === me.id) && html`<${Row} p=${me} sub=${t('kind.me')} />`}
+        <${Seg} value=${tab} onChange=${setTab} options=${tabs} />
+        <div class="pick-list">
+          ${tab === 'friends' && (s.account ? (friends.length ? friends.map((p) => html`<${Row} p=${p} sub=${p.id && s.friends.find((f) => f.id === p.id)?.stats?.avg ? '⌀ ' + s.friends.find((f) => f.id === p.id).stats.avg.toFixed(2) : t('kind.friend')} />`)
+              : html`<div class="pick-empty">${t('setup.noFriends')}<${Btn} kind="text" size="s" onClick=${() => { close(picked); location.hash = '#/profile'; }}>${t('nav.profile')}<//></div>`)
+            : html`<div class="pick-empty">${cloudEnabled() ? t('setup.signInForFriends') : t('profile.noCloud')}${cloudEnabled() && html`<${Btn} kind="tonal" size="s" icon="login" onClick=${() => { close(picked); location.hash = '#/profile'; }}>${t('auth.signIn')}<//>`}</div>`)}
+          ${tab === 'offline' && html`
+            ${offline.map((p) => html`<${Row} p=${p} sub=${t('kind.offline')} />`)}
+            <button class="pick-row add" onClick=${async () => { const p = await newOfflinePlayerDialog(); if (p && !taken.has(p.id)) pick(offlinePlayer(p)); }}>
+              <div class="avatar l" style="--ph:285"><${Icon} n="person_add" size=${28} /></div><div class="grow title-m">${t('players.newOffline')}</div></button>`}
+          ${tab === 'bot' && html`<div class="card high stack">
+            <div class="row"><${Avatar} p=${playerFromBot(lv)} size="l" /><div class="grow"><div class="title-m">${t('setup.bot')} · ${t('setup.level')} ${lv}</div><div class="body-s muted">~${BOT_LEVELS[lv - 1].avg} ${t('stats.avgShort')}</div></div></div>
+            <${Slider} min=${1} max=${BOT_LEVELS.length} value=${lv} label=${t('setup.level')} onInput=${setLv} />
+            <${Btn} kind="tonal" icon="add" onClick=${() => pick(playerFromBot(lv))}>${t('setup.addBot')}<//>
+            ${picked.filter((p) => p.bot).length > 0 && html`<div class="body-s muted">${t('setup.botsPicked', { n: picked.filter((p) => p.bot).length })}</div>`}
+          </div>`}
+        </div>
+        <div class="actions"><${Btn} kind="text" onClick=${() => close([])}>${t('common.cancel')}<//><${Btn} kind="filled" icon="check" onClick=${() => close(picked)} disabled=${!picked.length}>${picked.length ? t('setup.addN', { n: picked.length }) : t('common.add')}<//></div>`;
+    };
+    return html`<${Inner} />`;
+  });
+}
 
 export function Setup({ type }) {
   const st = useStore();
   const last = st.lastSetup[type] || {};
-  const lastHumans = (last.players || []).filter((p) => !p.bot && st.players.some((x) => x.id === p.id)).map((p) => p.id);
-  const [sel, setSel] = useState(lastHumans.length ? lastHumans : st.players.slice(0, 1).map((p) => p.id));
-  const lastBots = (last.players || []).filter((p) => p.bot).map((p) => p.bot);
-  const [bots, setBots] = useState(SUPPORTS_BOT[type] ? lastBots : []);
+  const maxP = MAX_PLAYERS[type];
+  const [roster, setRoster] = useState(() => {
+    const seen = new Set();
+    const r = (last.players || []).map((p) => resolve(p, st)).filter((p) => p && (!p.bot || SUPPORTS_BOT[type]) && !seen.has(p.id) && seen.add(p.id));
+    return (r.length ? r : [mePlayer(st)]).slice(0, maxP);
+  });
 
   // X01 options
   const [start, setStart] = useState(last.start || 501);
@@ -37,18 +104,13 @@ export function Setup({ type }) {
   const [range, setRange] = useState(last.min ? `${last.min}-${last.max}` : '41-100');
   const [ckRounds, setCkRounds] = useState(last.rounds || 10);
 
-  const maxP = MAX_PLAYERS[type];
-  const humans = sel.map((id) => st.players.find((p) => p.id === id)).filter(Boolean);
-  const total = humans.length + bots.length;
-
+  const total = roster.length;
   const toFirst = (n) => (fmt === 'best' ? Math.floor(n / 2) + 1 : n);
 
   const begin = () => {
-    if (!humans.length) return snack(t('setup.needPlayer'));
-    const players = [
-      ...humans.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape })),
-      ...bots.map((lv) => playerFromBot(lv)),
-    ];
+    if (!roster.some((p) => !p.bot)) return snack(t('setup.needPlayer'));
+    // keep match records small: only remote photo URLs are stored, local photos are resolved live
+    const players = roster.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, kind: p.kind, ...(p.bot ? { bot: p.bot } : {}), ...(p.photo && /^https?:/.test(p.photo) ? { photo: p.photo } : {}) }));
     let cfg;
     if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN) };
     else if (type === 'cricket') cfg = { players, variant, rounds, legsToWin: cLegs };
@@ -59,10 +121,16 @@ export function Setup({ type }) {
   };
 
   const shuffle = () => {
-    const a = [...sel];
+    const a = [...roster];
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    setSel(a); snack(t('setup.shuffled'));
+    setRoster(a); snack(t('setup.shuffled'));
   };
+  const move = (i, d) => { const a = [...roster]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; setRoster(a); haptic(8); };
+  const add = async () => {
+    const picked = await addPlayersDialog({ st, roster, room: maxP - roster.length, allowBot: SUPPORTS_BOT[type] });
+    if (picked?.length) setRoster((r) => [...r, ...picked.filter((p) => !r.some((x) => x.id === p.id))].slice(0, maxP));
+  };
+  const kindLabel = (p) => (p.bot ? `${t('setup.level')} ${p.bot} · ~${BOT_LEVELS[p.bot - 1].avg} ${t('stats.avgShort')}` : t('kind.' + p.kind));
 
   const fmtLabel = (n, one, many) => `${n} ${t(n === 1 ? one : many)}`;
 
@@ -71,22 +139,28 @@ export function Setup({ type }) {
     <div class="setup-grid setup-pad">
       <div class="card stack">
         <div class="row between">
-          <div class="title-m">${t('setup.players')} <span class="muted body-m">${total}/${maxP}</span></div>
-          ${sel.length > 1 && html`<${Btn} kind="text" size="s" icon="shuffle" onClick=${shuffle}>${t('setup.shuffle')}<//>`}
+          <div class="title-l">${t('setup.players')} <span class="muted title-m">${total}/${maxP}</span></div>
+          ${roster.length > 1 && html`<${Btn} kind="text" size="s" icon="shuffle" onClick=${shuffle}>${t('setup.shuffle')}<//>`}
         </div>
-        <${PlayerPicker} players=${st.players} selected=${sel} onChange=${(v) => setSel(v.slice(0, maxP - bots.length))} single=${maxP === 1} max=${maxP - bots.length} />
-        ${humans.length > 1 && html`<div class="row wrap" style="gap:6px">${humans.map((p, i) => html`<span class="chip on" style="padding-right:12px"><${Avatar} p=${p} />${i + 1}. ${p.name}</span>`)}</div>`}
-        ${SUPPORTS_BOT[type] && html`
-          ${bots.map((lv, i) => html`<div class="bot-row">
-            <${Avatar} p=${playerFromBot(lv)} />
-            <div class="grow stack s" style="gap:2px">
-              <div class="row between"><span class="title-s">${t('setup.bot')} · ${t('setup.level')} ${lv}</span><span class="body-s muted">~${BOT_LEVELS[lv - 1].avg} ${t('stats.avgShort')}</span></div>
-              ${type === 'x01' || type === 'cricket' ? html`<${Slider} min=${1} max=${BOT_LEVELS.length} value=${lv} label=${t('setup.level')} onInput=${(v) => setBots(bots.map((b, j) => (j === i ? v : b)))} />` : null}
+        ${roster.length > 1 && html`<div class="body-s muted" style="margin-top:-8px">${t('setup.orderHint')}</div>`}
+        <div class="roster">
+          ${roster.map((p, i) => html`<div class="roster-row" key=${p.id}>
+            <span class="order">${i + 1}</span>
+            <${Avatar} p=${p} size="l" />
+            <div class="grow" style="min-width:0">
+              <div class="title-m ellipsis">${p.name}</div>
+              <div class="kind"><${Icon} n=${KIND_ICON[p.bot ? 'bot' : p.kind] || 'person'} size=${16} />${kindLabel(p)}</div>
+              ${p.bot && html`<${Slider} min=${1} max=${BOT_LEVELS.length} value=${p.bot} label=${t('setup.level')} onInput=${(v) => setRoster(roster.map((x, j) => (j === i ? { ...playerFromBot(v), id: x.id } : x)))} />`}
             </div>
-            <${IconBtn} icon="close" title=${t('common.remove')} onClick=${() => setBots(bots.filter((_, j) => j !== i))} />
+            ${roster.length > 1 && html`<div class="col-btns">
+              <${IconBtn} icon="keyboard_arrow_up" title=${t('setup.moveUp')} disabled=${i === 0} onClick=${() => move(i, -1)} />
+              <${IconBtn} icon="keyboard_arrow_down" title=${t('setup.moveDown')} disabled=${i === roster.length - 1} onClick=${() => move(i, 1)} />
+            </div>`}
+            <${IconBtn} icon="close" title=${t('common.remove')} onClick=${() => setRoster(roster.filter((_, j) => j !== i))} />
           </div>`)}
-          ${total < maxP && html`<div><${Btn} kind="outlined" size="s" icon="smart_toy" onClick=${() => setBots([...bots, 5])}>${t('setup.addBot')}<//></div>`}
-        `}
+          ${!roster.length && html`<div class="body-m muted" style="text-align:center;padding:16px">${t('setup.needPlayer')}</div>`}
+        </div>
+        ${total < maxP && html`<${Btn} kind="tonal" size="m" cls="block" icon="group_add" onClick=${add}>${t('setup.addPlayers')}<//>`}
       </div>
 
       <div class="card stack">

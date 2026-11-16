@@ -47,6 +47,14 @@
 - Canlı maç istatistiği, maç sonu karşılaştırma tablosu ve leg dökümü
 - Maç geçmişi, rövanş
 
+### Hesap ve profil (v1.0.1)
+- **Hesap sistemi** — e-posta, kullanıcı adı ve şifre ile kayıt; e-posta doğrulama; **şifremi unuttum** bağlantısı
+- **Profil** — profil fotoğrafı, kullanıcı adı, ortalamalar ve özet istatistikler
+- **Bulut senkronizasyonu** — maçlar ve istatistikler hesaba yedeklenir, cihazlar arasında eşitlenir; hesap açmadan önceki maçlar hesaba taşınır
+- **Çevrimiçi arkadaşlar** — kullanıcı adıyla arkadaş ekleme; arkadaşla oynanan maç iki tarafın geçmişine de düşer
+- **Çevrimdışı oyuncular** — Ayarlar'dan kayıtlı oyuncu isimleri; oyun kurarken Arkadaşlar / Çevrimdışı / Bot sekmelerinden seçim
+- Hesap açmadan da uygulama tamamen çevrimdışı çalışır
+
 ### Diğer
 - **Checkout önerileri** (2–170, kalan dart sayısına göre)
 - **Sesli skor anonsu** (Web Speech API — “One hundred and eighty!”)
@@ -87,9 +95,20 @@ js/bot.js              Bot seviyeleri ve atış simülasyonu
 js/engines/            X01, Cricket ve antrenman motorları (aksiyon kaydından yeniden hesaplanır → kolay geri alma)
 js/screens/            Ekranlar (ana sayfa, kurulum, oyun, sonuç, istatistik, oyuncular, ayarlar)
 js/store.js            localStorage tabanlı kalıcı durum
+js/cloud.js            Supabase: hesap, şifre sıfırlama, senkronizasyon, arkadaşlar
+supabase/schema.sql    Veritabanı şeması ve güvenlik kuralları (RLS)
 js/i18n.js             TR / EN çeviriler
 sw.js                  Çevrimdışı önbellek
 ```
+
+## Kendi Supabase projenle çalıştırma
+
+Hesap özellikleri [Supabase](https://supabase.com) kullanır (ücretsiz plan yeterli):
+
+1. Yeni bir proje aç, **SQL Editor**'da [`supabase/schema.sql`](supabase/schema.sql) dosyasını çalıştır.
+2. **Authentication → URL Configuration**: Site URL ve Redirect URLs'e kendi site adresini ekle.
+3. **Authentication → Emails → SMTP Settings**: e-posta göndermek için bir SMTP sağlayıcısı tanımla (yerleşik servis yalnızca ekip üyelerine gönderir).
+4. [`js/config.js`](js/config.js) içine proje URL'sini ve `anon` anahtarını yaz. `config.js` boş bırakılırsa uygulama tamamen çevrimdışı çalışır.
 
 ## Lisans
 

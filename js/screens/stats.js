@@ -1,5 +1,5 @@
 import { html, useState } from '../../vendor/preact-htm.js';
-import { useStore } from '../store.js';
+import { useStore, mePlayer, offlinePlayer, friendPlayer } from '../store.js';
 import { t } from '../i18n.js';
 import { Seg, Avatar, EmptyState, Btn, fmt1, fmtPct } from '../ui.js';
 import { go } from '../match.js';
@@ -51,7 +51,7 @@ const Tile = ({ k, v, hero }) => html`<div class=${'tile' + (hero ? ' hero-tile'
 export function Stats({ pid }) {
   const st = useStore();
   const [type, setType] = useState('x01');
-  const players = st.players;
+  const players = [mePlayer(st), ...st.players.map(offlinePlayer), ...st.friends.map(friendPlayer).filter((f) => st.matches.some((m) => m.players.some((p) => p.id === f.id)))];
   const sel = players.find((p) => p.id === pid) || players[0];
   if (!sel) return html`<${TopBar} title=${t('nav.stats')} back=${false} /><${EmptyState} icon="monitoring" title=${t('stats.empty')} text=${t('stats.emptyText')}><${Btn} kind="filled" icon="person_add" onClick=${() => go('#/players')}>${t('players.add')}<//><//>`;
 

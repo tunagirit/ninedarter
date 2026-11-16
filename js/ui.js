@@ -28,8 +28,18 @@ export const Shape = ({ name, cls = '', style = '' }) =>
 export function Avatar({ p, size = '', spin = false }) {
   if (!p) return null;
   const letter = p.bot ? '' : (p.name || '?').trim().charAt(0).toUpperCase();
-  return html`<div class=${'avatar ' + size + (spin ? ' spin' : '')} style=${`--ph:${p.hue ?? 262}`}>
-    <svg viewBox="0 0 100 100" aria-hidden="true"><path d=${shapePath(p.shape || 'cookie')} /></svg>
+  const shape = p.shape || 'cookie';
+  const gs = getState();
+  const photo = p.photo || (!p.bot && (p.kind === 'me' || p.id === gs.profile?.localId) ? gs.account?.avatar || gs.profile?.photo : null);
+  if (photo) {
+    const cid = 'av-' + shape;
+    return html`<div class=${'avatar photo ' + size + (spin ? ' spin' : '')} style=${`--ph:${p.hue ?? 285}`}>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id=${cid}><path d=${shapePath(shape)} /></clipPath></defs>
+        <path d=${shapePath(shape)} /><image href=${photo}x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" clip-path=${`url(#${cid})`} /></svg>
+    </div>`;
+  }
+  return html`<div class=${'avatar ' + size + (spin ? ' spin' : '')} style=${`--ph:${p.hue ?? 285}`}>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d=${shapePath(shape)} /></svg>
     ${p.bot ? html`<${Icon} n="smart_toy" fill size=${size === 'xl' ? 40 : size === 'l' ? 28 : 20} />` : html`<span>${letter}</span>`}
   </div>`;
 }

@@ -8,10 +8,11 @@ import { Setup } from './screens/setup.js';
 import { Game } from './screens/game.js';
 import { Result, History } from './screens/results.js';
 import { Stats } from './screens/stats.js';
-import { Players } from './screens/players.js';
+import { Profile, newPasswordDialog } from './screens/profile.js';
+import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.1';
 
 function useHash() {
   const get = () => (location.hash.replace(/^#\/?/, '') || '').split('/').filter(Boolean);
@@ -26,7 +27,7 @@ function useHash() {
 
 const NAV = [
   { id: '', icon: 'target', key: 'nav.play' },
-  { id: 'players', icon: 'group', key: 'nav.players' },
+  { id: 'profile', icon: 'account_circle', key: 'nav.profile' },
   { id: 'stats', icon: 'monitoring', key: 'nav.stats' },
   { id: 'history', icon: 'history', key: 'nav.history' },
   { id: 'settings', icon: 'settings', key: 'nav.settings' },
@@ -46,6 +47,7 @@ function App() {
   const st = useStore();
   const route = useHash();
   const { theme, hue, lang } = st.settings;
+  useEffect(() => { if (st.cloud?.recovery) newPasswordDialog(); }, [st.cloud?.recovery]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -64,7 +66,7 @@ function App() {
     case 'result': screen = html`<${Result} id=${b} key=${b} />`; break;
     case 'history': screen = html`<${History} />`; break;
     case 'stats': screen = html`<${Stats} pid=${b} />`; break;
-    case 'players': screen = html`<${Players} />`; break;
+    case 'players': case 'profile': screen = html`<${Profile} />`; break;
     case 'settings': screen = html`<${Settings} />`; break;
     default: screen = html`<${Home} />`;
   }
@@ -76,6 +78,7 @@ function App() {
 }
 
 render(html`<${App} />`, document.getElementById('app'));
+initCloud();
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
