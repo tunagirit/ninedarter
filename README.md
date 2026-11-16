@@ -25,7 +25,7 @@
   - 8 oyuncuya kadar veya **takım modu** (2–4 takım), leg/set başlangıcı otomatik döner
 - **Cricket** — dört oyun türü, **cezalı mod** (cut-throat) açılıp kapatılabilir, takım modu, tur limiti, çoklu leg
   - **Cricket:** 20–15 ve Bull
-  - **Fullboard:** 20'den 1'e tüm sayılar
+  - **Fullboard:** 20–10, Bull, Double, Triple ve House (iç bull); 10 ve 11 isteğe bağlı olarak çıkarılabilir
   - **Tactics:** Fullboard + Double, Triple ve Bull (house)
   - **Akyaka:** sıralı Cricket — önce 20, sonra 19 … 15, en son toplam 3 Bull; sıradaki hedef kapanmadan diğerleri işlemez
 - **Antrenman**

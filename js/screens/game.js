@@ -278,7 +278,7 @@ function Mark({ n }) {
     <path d="M7 21 L21 7" />${n >= 2 && html`<path d="M7 7 L21 21" />`}${n >= 3 && html`<circle cx="14" cy="14" r="11" />`}
   </svg>`;
 }
-const keyLabel = (x) => (x === 25 ? 'B' : x === 'D' ? 'D' : x === 'T' ? 'T' : x);
+const keyLabel = (x) => (x === 25 ? 'B' : x);
 
 function CricketGame({ a }) {
   const { config } = a;
@@ -308,7 +308,7 @@ function CricketGame({ a }) {
   const dead = (x) => (s.seq ? view.marks[side][x] >= 3 : x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
   const cols = `52px repeat(${n}, minmax(0,1fr))`;
   const compact = targets.length > 8;
-  const padNums = (config.mode || 'cricket') === 'cricket' ? [20, 19, 18, 17, 16, 15] : Array.from({ length: 20 }, (_, i) => i + 1);
+  const padNums = targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
   const hasBull = targets.includes(25);
   const throwing = isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '';
 

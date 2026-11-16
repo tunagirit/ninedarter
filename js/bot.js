@@ -82,7 +82,7 @@ function cricketTarget(st, me) {
   const someOpen = (n) => others.some((o) => st.marks[o][n] < 3);
   // For the D/T beds aim at the highest number I still need too, so one dart counts twice.
   const bedNumber = () => nums.find((x) => typeof x === 'number' && x !== 25 && st.marks[me][x] < 3) || 20;
-  const aim = (n) => (n === 25 ? { n: 25, m: 2 } : n === 'D' ? { n: bedNumber(), m: 2 } : n === 'T' ? { n: bedNumber(), m: 3 } : { n, m: 3 });
+  const aim = (n) => (n === 25 || n === 'H' ? { n: 25, m: 2 } : n === 'D' ? { n: bedNumber(), m: 2 } : n === 'T' ? { n: bedNumber(), m: 3 } : { n, m: 3 });
   if (st.seq) { const nx = nums.find((x) => st.marks[me][x] < 3); return aim(nx ?? 25); }
   const oppPts = others.map((o) => st.points[o]);
   const cut = !!st.cut;

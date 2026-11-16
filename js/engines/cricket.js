@@ -7,13 +7,16 @@ const range = (a, b) => Array.from({ length: a - b + 1 }, (_, i) => a - i);
 export const VARIANTS = {
   cricket: [...range(20, 15), 25],
   tactics: [...range(20, 1), 'D', 'T', 25],
-  fullboard: range(20, 1),
+  fullboard: [...range(20, 10), 25, 'D', 'T', 'H'], // H = house (inner bull)
   akyaka: [...range(20, 15), 25], // sequential: only the next unclosed target counts, no points
 };
 export const NUMBERS = VARIANTS.cricket;
 
 /* config = { mode: 'cricket'|'tactics'|'fullboard', cutthroat: bool, legsToWin, rounds (0 = unlimited), players, teams? } */
-export const targetsOf = (config) => VARIANTS[config.mode || 'cricket'];
+export const targetsOf = (config) => {
+  const t = VARIANTS[config.mode || 'cricket'];
+  return config.mode === 'fullboard' && config.no1011 ? t.filter((x) => x !== 10 && x !== 11) : t;
+};
 const isCut = (config) => config.mode !== 'akyaka' && (!!config.cutthroat || config.variant === 'cutthroat');
 /** Akyaka: the next target this side still has to close (in order). */
 export const nextTarget = (s, side) => s.targets.find((x) => s.marks[side][x] < 3);
@@ -76,6 +79,7 @@ function applyDart(s, side, d) {
   let c = mark(s, side, d.n, d.m, d.n === 25 ? 25 : d.n);
   if (d.n !== 25 && d.m === 2) c += mark(s, side, 'D', 1, d.n * 2);
   if (d.n !== 25 && d.m === 3) c += mark(s, side, 'T', 1, d.n * 3);
+  if (d.n === 25 && d.m === 2) c += mark(s, side, 'H', 1, 50);
   return c;
 }
 

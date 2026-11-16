@@ -12,7 +12,7 @@ import { Profile, newPasswordDialog } from './screens/profile.js';
 import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 
-export const VERSION = '1.0.2';
+export const VERSION = '1.0.2a';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
