@@ -18,7 +18,7 @@ const defaults = () => ({
   active: null,
   lastSetup: {},
   account: null, // {uid, email, username, avatar}
-  friends: [], friendReqs: [],
+  friends: [], friendReqs: [], inbox: { convs: [], unread: 0 },
   cloud: {},
 });
 
@@ -40,7 +40,7 @@ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
 /** The local user as a game participant. */
 export function mePlayer(s = state) {
   const p = s.profile;
-  const name = s.account?.username || p.name || (s.settings.lang === 'tr' ? 'Ben' : 'Me');
+  const name = s.account ? s.account.displayName || s.account.username : p.name || (s.settings.lang === 'tr' ? 'Ben' : 'Me');
   return { id: s.account?.uid || p.localId, name, hue: p.hue, shape: p.shape, photo: s.account?.avatar || p.photo || null, kind: 'me' };
 }
 export const friendPlayer = (f) => ({ id: f.id, name: f.name, hue: Math.round(parseInt(f.id.slice(0, 2), 16) * 1.4), shape: 'flower', photo: f.photo || null, kind: 'friend' });

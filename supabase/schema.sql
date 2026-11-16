@@ -88,3 +88,49 @@ drop policy if exists "avatar update own folder" on storage.objects;
 create policy "avatar update own folder" on storage.objects for update to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 drop policy if exists "avatar delete own folder" on storage.objects;
 create policy "avatar delete own folder" on storage.objects for delete to authenticated using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ---------- v1.0.3: display names, friendship date, messages ----------
+alter table public.profiles add column if not exists display_name text;
+alter table public.profiles drop constraint if exists display_name_len;
+alter table public.profiles add constraint display_name_len check (display_name is null or char_length(display_name) between 1 and 24);
+
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, username, display_name)
+  values (new.id,
+          coalesce(new.raw_user_meta_data ->> 'username', 'player_' || substr(new.id::text, 1, 8)),
+          nullif(left(trim(coalesce(new.raw_user_meta_data ->> 'display_name', '')), 24), ''));
+  return new;
+end $$;
+
+alter table public.friendships add column if not exists accepted_at timestamptz;
+update public.friendships set accepted_at = created_at where status = 'accepted' and accepted_at is null;
+
+create or replace function public.are_friends(a uuid, b uuid) returns boolean
+language sql security definer set search_path = public stable as $$
+  select exists (select 1 from public.friendships f where f.status = 'accepted'
+    and ((f.requester = a and f.addressee = b) or (f.requester = b and f.addressee = a)));
+$$;
+grant execute on function public.are_friends(uuid, uuid) to authenticated;
+
+create table if not exists public.messages (
+  id bigint generated always as identity primary key,
+  sender uuid not null references public.profiles (id) on delete cascade,
+  recipient uuid not null references public.profiles (id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now(),
+  read_at timestamptz
+);
+create index if not exists messages_recipient on public.messages (recipient, created_at desc);
+create index if not exists messages_sender on public.messages (sender, created_at desc);
+alter table public.messages enable row level security;
+drop policy if exists "read own messages" on public.messages;
+create policy "read own messages" on public.messages for select to authenticated using (auth.uid() in (sender, recipient));
+drop policy if exists "message friends" on public.messages;
+create policy "message friends" on public.messages for insert to authenticated with check (sender = auth.uid() and public.are_friends(sender, recipient));
+drop policy if exists "mark received as read" on public.messages;
+create policy "mark received as read" on public.messages for update to authenticated using (recipient = auth.uid()) with check (recipient = auth.uid());
+-- recipients may only change read_at
+revoke update on public.messages from authenticated;
+grant update (read_at) on public.messages to authenticated;

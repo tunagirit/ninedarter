@@ -36,7 +36,7 @@ export async function initCloud() {
       if (event === 'SIGNED_OUT') {
         // Back to a clean guest: no account identity, no saved players on this device
         update((s) => {
-          s.account = null; s.friends = []; s.friendReqs = []; s.players = []; s.lastSetup = {};
+          s.account = null; s.friends = []; s.friendReqs = []; s.players = []; s.lastSetup = {}; s.inbox = { convs: [], unread: 0 };
           s.profile = { localId: 'g' + Math.random().toString(36).slice(2, 12), name: '', photo: null, hue: 285, shape: 'cookie', linked: false };
         });
       }
@@ -53,7 +53,8 @@ export async function initCloud() {
 async function loadAccount(user) {
   const c = await sb();
   const { data: prof } = await c.from('profiles').select('*').eq('id', user.id).maybeSingle();
-  const acc = { uid: user.id, email: user.email, username: prof?.username || user.user_metadata?.username || 'player', avatar: prof?.avatar_url || null };
+  const acc = { uid: user.id, email: user.email, username: prof?.username || user.user_metadata?.username || 'player', displayName: prof?.display_name || '', avatar: prof?.avatar_url || null };
+  const localPhoto = getState().profile.photo;
   update((s) => {
     s.account = acc;
     // Link the local "me" identity to this account (first time only) and migrate local history.
@@ -65,26 +66,40 @@ async function loadAccount(user) {
       if (s.active) s.active = { ...s.active, config: { ...s.active.config, players: s.active.config.players.map(swap) } };
       for (const k of Object.keys(s.lastSetup)) s.lastSetup[k] = { ...s.lastSetup[k], players: (s.lastSetup[k].players || []).map(swap) };
     }
-    s.profile = { ...p, localId: acc.uid, linked: true, name: acc.username, photo: acc.avatar || p.photo };
+    s.profile = { ...p, localId: acc.uid, linked: true, name: acc.displayName || acc.username, photo: acc.avatar || p.photo };
   });
+  // A photo picked before signing in only lived on this device: upload it so friends can see it.
+  if (!acc.avatar && localPhoto && localPhoto.startsWith('data:')) {
+    fetch(localPhoto).then((r) => r.blob()).then((b) => uploadAvatar(b)).catch(() => {});
+  }
   syncAll().catch(() => {});
+  startPolling();
+}
+
+// ---------- background refresh (friends, photos, messages) ----------
+let pollId = 0;
+function startPolling() {
+  if (pollId) return;
+  const tick = () => { if (getState().account && document.visibilityState === 'visible') { loadInbox().catch(() => {}); loadFriends().catch(() => {}); } };
+  pollId = setInterval(tick, 30000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); });
 }
 
 export async function syncAll() {
   if (!getState().account) return;
   setCloud({ syncing: true });
-  try { await Promise.all([syncMatches(), loadFriends()]); setCloud({ syncing: false, lastSync: Date.now(), lastError: null }); }
+  try { await Promise.all([syncMatches(), loadFriends(), loadInbox()]); setCloud({ syncing: false, lastSync: Date.now(), lastError: null }); }
   catch (e) { setCloud({ syncing: false, lastError: String(e.message || e) }); }
 }
 
 // ---------- auth ----------
-export async function signUp({ email, username, password }) {
+export async function signUp({ email, username, password, displayName }) {
   const c = await sb();
   if (!USERNAME_RE.test(username)) throw new Error('username-format');
   const { data: ok, error: e1 } = await c.rpc('username_available', { u: username });
   if (e1) throw e1;
   if (!ok) throw new Error('username-taken');
-  const { data, error } = await c.auth.signUp({ email, password, options: { data: { username }, emailRedirectTo: SITE() } });
+  const { data, error } = await c.auth.signUp({ email, password, options: { data: { username, display_name: (displayName || '').trim() }, emailRedirectTo: SITE() } });
   if (error) throw error;
   return { needsConfirm: !data.session };
 }
@@ -113,7 +128,16 @@ export async function changeUsername(username) {
   if (!ok && username.toLowerCase() !== acc.username.toLowerCase()) throw new Error('username-taken');
   const { error } = await c.from('profiles').update({ username, updated_at: new Date().toISOString() }).eq('id', acc.uid);
   if (error) throw error;
-  update((s) => { s.account = { ...s.account, username }; s.profile = { ...s.profile, name: username }; });
+  update((s) => { s.account = { ...s.account, username }; s.profile = { ...s.profile, name: s.account.displayName || username }; });
+}
+/** Display name shown to others; empty = fall back to the username. */
+export async function setDisplayName(name) {
+  const v = (name || '').trim().slice(0, 24);
+  const c = await sb();
+  const acc = getState().account;
+  const { error } = await c.from('profiles').update({ display_name: v || null, updated_at: new Date().toISOString() }).eq('id', acc.uid);
+  if (error) throw error;
+  update((s) => { s.account = { ...s.account, displayName: v }; s.profile = { ...s.profile, name: v || s.account.username }; });
 }
 
 // ---------- avatar ----------
@@ -177,7 +201,10 @@ async function pushStats() {
   const { aggregateX01 } = await import('./screens/stats.js');
   const st = getState(); const uid = st.account.uid;
   const a = aggregateX01(st.matches, uid);
-  const stats = { avg: +a.avg.toFixed(2), f9: +a.f9.toFixed(2), coPct: +a.coPct.toFixed(1), matches: a.n, wins: a.wins, t180: a.t180, hiCo: a.hiCo, best: a.best };
+  // cricket summary (all cricket modes)
+  let marks = 0, rounds = 0, cm = 0;
+  for (const m of st.matches) { if (m.type !== 'cricket') continue; const i = m.players.findIndex((p) => p.id === uid); if (i < 0) continue; cm++; marks += m.stats[i]?.marks || 0; rounds += m.stats[i]?.rounds || 0; }
+  const stats = { avg: +a.avg.toFixed(2), f9: +a.f9.toFixed(2), coPct: +a.coPct.toFixed(1), matches: a.n, wins: a.wins, multi: a.multi, t180: a.t180, t140: a.t140, t100: a.t100, hiCo: a.hiCo, best: a.best, high: a.high, cricket: cm, mpr: rounds ? +(marks / rounds).toFixed(2) : 0, total: st.matches.filter((m) => m.players.some((p) => p.id === uid)).length };
   const c = await sb();
   await c.from('profiles').update({ stats }).eq('id', uid);
 }
@@ -198,20 +225,20 @@ export async function loadFriends() {
   const otherIds = [...new Set(rows.map((r) => (r.requester === uid ? r.addressee : r.requester)))];
   let profs = [];
   if (otherIds.length) {
-    const { data, error: e2 } = await c.from('profiles').select('id,username,avatar_url,stats').in('id', otherIds);
+    const { data, error: e2 } = await c.from('profiles').select('id,username,display_name,avatar_url,stats').in('id', otherIds);
     if (e2) throw e2;
     profs = data;
   }
-  const P = Object.fromEntries(profs.map((p) => [p.id, { id: p.id, name: p.username, photo: p.avatar_url, stats: p.stats || {} }]));
+  const P = Object.fromEntries(profs.map((p) => [p.id, { id: p.id, name: p.display_name || p.username, username: p.username, photo: p.avatar_url, stats: p.stats || {} }]));
   const other = (r) => (r.requester === uid ? r.addressee : r.requester);
   update((s) => {
-    s.friends = rows.filter((r) => r.status === 'accepted' && P[other(r)]).map((r) => ({ ...P[other(r)], fid: r.id }));
-    s.friendReqs = rows.filter((r) => r.status === 'pending' && P[other(r)]).map((r) => ({ ...P[other(r)], fid: r.id, incoming: r.addressee === uid }));
+    s.friends = rows.filter((r) => r.status === 'accepted' && P[other(r)]).map((r) => ({ ...P[other(r)], fid: r.id, since: r.accepted_at || r.created_at }));
+    s.friendReqs = rows.filter((r) => r.status === 'pending' && P[other(r)]).map((r) => ({ ...P[other(r)], fid: r.id, incoming: r.addressee === uid, at: r.created_at }));
   });
 }
 export async function findUser(username) {
   const c = await sb();
-  const { data, error } = await c.from('profiles').select('id,username,avatar_url').ilike('username', username.replace(/[%_]/g, (m) => '\\' + m)).limit(1);
+  const { data, error } = await c.from('profiles').select('id,username,display_name,avatar_url').ilike('username', username.replace(/[%_]/g, (m) => '\\' + m)).limit(1);
   if (error) throw error;
   return data[0] || null;
 }
@@ -223,7 +250,7 @@ export async function sendFriendRequest(id) {
 }
 export async function acceptFriend(fid) {
   const c = await sb();
-  const { error } = await c.from('friendships').update({ status: 'accepted' }).eq('id', fid);
+  const { error } = await c.from('friendships').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('id', fid);
   if (error) throw error;
   await loadFriends();
 }
@@ -232,6 +259,50 @@ export async function removeFriend(fid) {
   const { error } = await c.from('friendships').delete().eq('id', fid);
   if (error) throw error;
   await loadFriends();
+}
+
+// ---------- messages ----------
+/** Conversation list + unread count (friends only). */
+export async function loadInbox() {
+  const uid = getState().account?.uid;
+  if (!uid) return;
+  const c = await sb();
+  const { data, error } = await c.from('messages').select('id,sender,recipient,body,created_at,read_at').order('created_at', { ascending: false }).limit(500);
+  if (error) throw error;
+  const convs = new Map();
+  let unread = 0;
+  for (const m of data) {
+    const other = m.sender === uid ? m.recipient : m.sender;
+    const isUnread = m.recipient === uid && !m.read_at;
+    if (isUnread) unread++;
+    if (!convs.has(other)) convs.set(other, { id: other, last: m, unread: 0 });
+    if (isUnread) convs.get(other).unread++;
+  }
+  update((s) => { s.inbox = { convs: [...convs.values()], unread, at: Date.now() }; });
+}
+export async function loadThread(fid) {
+  const uid = getState().account.uid;
+  const c = await sb();
+  const { data, error } = await c.from('messages').select('id,sender,recipient,body,created_at,read_at')
+    .or(`and(sender.eq.${uid},recipient.eq.${fid}),and(sender.eq.${fid},recipient.eq.${uid})`).order('created_at', { ascending: true }).limit(300);
+  if (error) throw error;
+  return data;
+}
+export async function sendMessage(fid, body) {
+  const text = (body || '').trim().slice(0, 1000);
+  if (!text) return null;
+  const c = await sb();
+  const { data, error } = await c.from('messages').insert({ sender: getState().account.uid, recipient: fid, body: text }).select().single();
+  if (error) throw error;
+  loadInbox().catch(() => {});
+  return data;
+}
+export async function markRead(fid) {
+  const uid = getState().account?.uid;
+  if (!uid) return;
+  const c = await sb();
+  await c.from('messages').update({ read_at: new Date().toISOString() }).eq('sender', fid).eq('recipient', uid).is('read_at', null);
+  loadInbox().catch(() => {});
 }
 
 /** Map Supabase / internal errors to i18n keys. */

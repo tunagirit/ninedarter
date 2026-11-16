@@ -78,6 +78,7 @@ function AuthCard() {
   const [mode, setMode] = useState('in');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [err, setErr] = useState({});
@@ -97,8 +98,8 @@ function AuthCard() {
     setBusy(true);
     try {
       if (mode === 'up') {
-        const r = await cloud.signUp({ email: email.trim(), username: username.trim(), password: pw });
-        if (r.needsConfirm) setDone(email.trim()); else snack(t('auth.welcome', { name: username }));
+        const r = await cloud.signUp({ email: email.trim(), username: username.trim(), password: pw, displayName });
+        if (r.needsConfirm) setDone(email.trim()); else snack(t('auth.welcome', { name: displayName.trim() || username }));
       } else { await cloud.signIn({ email: email.trim(), password: pw }); snack(t('auth.signedIn')); }
     } catch (ex) {
       const k = cloud.errKey(ex);
@@ -119,6 +120,7 @@ function AuthCard() {
     <${Seg} value=${mode} onChange=${(m) => { setMode(m); setErr({}); }} options=${[{ value: 'in', label: t('auth.signIn') }, { value: 'up', label: t('auth.signUp') }]} />
     <${Field} label=${t('auth.email')} type="email" value=${email} onInput=${setEmail} autocomplete="email" error=${err.email} icon="mail" />
     ${mode === 'up' && html`<${Field} label=${t('auth.username')} value=${username} onInput=${(v) => setUsername(v.replace(/\s/g, ''))} autocomplete="username" error=${err.username} hint=${t('auth.usernameHint')} icon="alternate_email" />`}
+    ${mode === 'up' && html`<${Field} label=${t('auth.displayName')} value=${displayName} onInput=${(v) => setDisplayName(v.slice(0, 24))} autocomplete="nickname" hint=${t('auth.displayNameHint')} icon="badge" />`}
     <${Field} label=${t('auth.password')} type="password" value=${pw} onInput=${setPw} autocomplete=${mode === 'up' ? 'new-password' : 'current-password'} error=${err.pw} hint=${mode === 'up' ? t('auth.pwHint') : ''} onEnter=${mode === 'in' ? submit : null} icon="lock" />
     ${mode === 'up' && html`<${Field} label=${t('auth.password2')} type="password" value=${pw2} onInput=${setPw2} autocomplete="new-password" error=${err.pw2} onEnter=${submit} icon="lock" />`}
     ${err.form && html`<div class="err-box"><${Icon} n="error" />${err.form}</div>`}
@@ -160,7 +162,7 @@ function Friends() {
         <${Btn} kind="filled" size="s" onClick=${() => cloud.acceptFriend(f.fid).then(() => snack(t('friends.accepted', { name: f.name }))).catch((e) => snack(t(cloud.errKey(e))))}>${t('friends.accept')}<//>
         <${IconBtn} icon="close" title=${t('friends.decline')} onClick=${() => cloud.removeFriend(f.fid).catch(() => {})} />
       </div>`)}</div>`}
-    ${st.friends.length ? html`<div class="list">${st.friends.map((f) => html`<div class="list-item" style="cursor:default">
+    ${st.friends.length ? html`<div class="list">${st.friends.map((f) => html`<div class="list-item" onClick=${(e) => { if (!e.target.closest('button')) go('#/friend/' + f.id); }}>
         <${Avatar} p=${friendPlayer(f)} size="l" />
         <div class="grow"><div class="title-m">${f.name}</div>
           <div class="meta">${f.stats?.matches ? `⌀ ${fmt1(f.stats.avg || 0)} · ${f.stats.matches} ${t('stats.matchesShort')}${f.stats.t180 ? ' · 180×' + f.stats.t180 : ''}` : t('players.noGames')}</div></div>
@@ -196,14 +198,25 @@ export function Profile() {
   };
   const saveName = async () => {
     const v = (nameEdit || '').trim();
-    if (!v) return setNameEdit(null);
+    if (!v && !acc) return setNameEdit(null);
     try {
-      if (acc) await cloud.changeUsername(v);
+      if (acc) await cloud.setDisplayName(v);
       else update((s) => { s.profile = { ...s.profile, name: v }; });
       setNameEdit(null);
     } catch (e) { snack(t(cloud.errKey(e))); }
   };
 
+  const changeUsernameDialog = () => openDialog((close) => {
+    const Inner = () => {
+      const [v, setV] = useState(acc.username);
+      const [err, setErr] = useState('');
+      const save = async () => { try { await cloud.changeUsername(v.trim()); snack(t('profile.usernameSaved')); close(); } catch (e) { setErr(t(cloud.errKey(e))); } };
+      return html`<div class="headline-s">${t('auth.username')}</div>
+        <${Field} label=${t('auth.username')} value=${v} onInput=${(x) => setV(x.replace(/\s/g, ''))} hint=${t('auth.usernameHint')} error=${err} icon="alternate_email" onEnter=${save} />
+        <div class="actions"><${Btn} kind="text" onClick=${() => close()}>${t('common.cancel')}<//><${Btn} kind="filled" onClick=${save}>${t('common.save')}<//></div>`;
+    };
+    return html`<${Inner} />`;
+  });
   const a = aggregateX01(st.matches, me.id);
   const c = st.cloud || {};
 
@@ -219,11 +232,11 @@ export function Profile() {
         <input type="file" accept="image/*" ref=${fileRef} hidden onChange=${pickPhoto} />
       </div>
       ${nameEdit != null ? html`<div class="row" style="gap:8px;width:min(320px,100%)">
-          <input class="textfield" value=${nameEdit} maxlength="20" onInput=${(e) => setNameEdit(e.target.value)} onKeyDown=${(e) => e.key === 'Enter' && saveName()} />
+          <input class="textfield" value=${nameEdit} maxlength="24" placeholder=${acc ? acc.username : t('players.name')} onInput=${(e) => setNameEdit(e.target.value)} onKeyDown=${(e) => e.key === 'Enter' && saveName()} />
           <${IconBtn} icon="check" kind="filled" title=${t('common.save')} onClick=${saveName} /></div>`
-        : html`<button class="name-btn" onClick=${() => setNameEdit(acc ? acc.username : st.profile.name || '')}><span class="display-s">${me.name}</span><${Icon} n="edit" size=${20} /></button>`}
+        : html`<button class="name-btn" onClick=${() => setNameEdit(acc ? acc.displayName || '' : st.profile.name || '')}><span class="display-s">${me.name}</span><${Icon} n="edit" size=${20} /></button>`}
       <div class="row wrap" style="justify-content:center;gap:8px">
-        ${acc ? html`<span class="badge win"><${Icon} n="verified" size=${14} /> ${t('profile.online')}</span><span class="body-m">${acc.email}</span>`
+        ${acc ? html`<span class="body-m">@${acc.username}</span><span class="badge win"><${Icon} n="verified" size=${14} /> ${t('profile.online')}</span><span class="body-m">${acc.email}</span>`
           : html`<span class="badge"><${Icon} n="cloud_off" size=${14} /> ${t('profile.offline')}</span>`}
       </div>
       ${me.photo && html`<${Btn} kind="text" size="s" icon="hide_image" onClick=${removePhoto}>${t('profile.removePhoto')}<//>`}
@@ -245,6 +258,7 @@ export function Profile() {
         <div class="list">
           <div class="setting"><${Icon} n="sync" /><div class="grow"><div class="title-s">${t('profile.sync')}</div><div class="body-s muted">${c.lastSync ? t('profile.lastSync', { t: new Date(c.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }) : '–'}${c.lastError ? ' · ' + t('auth.err.network') : ''}</div></div>
             <${Btn} kind="tonal" size="s" disabled=${c.syncing} onClick=${() => cloud.syncAll().then(() => snack(t('profile.synced')))}>${t('profile.syncNow')}<//></div>
+          <div class="setting"><${Icon} n="alternate_email" /><div class="grow"><div class="title-s">${t('auth.username')}</div><div class="body-s muted">@${acc.username} · ${t('profile.usernameSub')}</div></div><${Btn} kind="tonal" size="s" onClick=${changeUsernameDialog}>${t('common.edit')}<//></div>
           <div class="setting"><${Icon} n="password" /><div class="grow title-s">${t('profile.changePw')}</div><${Btn} kind="tonal" size="s" onClick=${() => newPasswordDialog()}>${t('common.edit')}<//></div>
           <div class="setting"><${Icon} n="logout" /><div class="grow title-s">${t('profile.signOut')}</div><${Btn} kind="danger" size="s" onClick=${async () => { if (await confirmDialog({ title: t('profile.signOutQ'), text: t('profile.signOutText'), ok: t('profile.signOut'), cancel: t('common.cancel') })) { await cloud.signOut(); snack(t('profile.signedOut')); } }}>${t('profile.signOut')}<//></div>
         </div>` : html`<${AuthCard} />`}

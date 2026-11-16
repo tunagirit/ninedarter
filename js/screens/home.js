@@ -1,10 +1,56 @@
 import { html } from '../../vendor/preact-htm.js';
-import { useStore } from '../store.js';
+import { useStore, mePlayer, friendPlayer } from '../store.js';
 import { t } from '../i18n.js';
 import { Icon, Btn, Shape, Avatar, confirmDialog } from '../ui.js';
 import { computeActive, go, abandonMatch, startMatch } from '../match.js';
 import { modeName } from './common.js';
 import { winnerNames } from '../teams.js';
+import { aggregateX01 } from './stats.js';
+import { useSocialCounts } from './social.js';
+import { cloudEnabled } from '../cloud.js';
+import { fmt1 } from '../ui.js';
+
+const greetingKey = () => { const h = new Date().getHours(); return h < 5 ? 'home.hi.night' : h < 12 ? 'home.hi.morning' : h < 18 ? 'home.hi.day' : h < 22 ? 'home.hi.evening' : 'home.hi.night'; };
+
+/** Small sparkline of the last match averages. */
+function Spark({ data }) {
+  if (data.length < 2) return null;
+  const d = data.slice(-8), W = 120, H = 34, max = Math.max(...d), min = Math.min(...d);
+  const x = (i) => (i / (d.length - 1)) * (W - 6) + 3, y = (v) => H - 4 - ((v - min) / (max - min || 1)) * (H - 8);
+  const pts = d.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return html`<svg class="spark" viewBox=${`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true"><polyline points=${pts} /><circle cx=${x(d.length - 1)} cy=${y(d.at(-1))} r="3.5" /></svg>`;
+}
+
+function Welcome() {
+  const st = useStore();
+  const me = mePlayer(st);
+  const a = aggregateX01(st.matches, me.id);
+  const played = st.matches.filter((m) => m.players.some((p) => p.id === me.id)).length;
+  const online = st.friends.slice(0, 4);
+  return html`<section class="welcome">
+    <button class="welcome-head" onClick=${() => go('#/profile')}>
+      <${Avatar} p=${me} size="l" />
+      <div class="grow" style="min-width:0">
+        <div class="label-m muted">${t(greetingKey())}</div>
+        <div class="title-l ellipsis">${me.name}</div>
+        ${st.account ? html`<div class="body-s muted ellipsis">@${st.account.username}</div>` : html`<div class="body-s muted">${t('profile.offline')}</div>`}
+      </div>
+    </button>
+    <div class="welcome-stats">
+      <div><span class="v num">${a.n ? fmt1(a.avg) : '–'}</span><span class="k">${t('stats.avgShort')}</span></div>
+      <div><span class="v num">${played}</span><span class="k">${t('stats.matchesShort')}</span></div>
+      <div><span class="v num">${a.t180}</span><span class="k">180</span></div>
+    </div>
+    <${Spark} data=${a.series} />
+    ${st.account ? (online.length ? html`<button class="welcome-friends" onClick=${() => go('#/profile')}>
+          <div class="stackav">${online.map((f) => html`<${Avatar} p=${friendPlayer(f)} />`)}</div>
+          <span class="body-s">${t('home.friendsN', { n: st.friends.length })}</span></button>`
+        : html`<button class="welcome-cta" onClick=${() => go('#/profile')}><${Icon} n="person_add" size=${18} />${t('home.addFriends')}</button>`)
+      : cloudEnabled() && html`<button class="welcome-cta" onClick=${() => go('#/profile')}><${Icon} n="login" size=${18} />${t('home.signInCta')}</button>`}
+  </section>`;
+}
+
+const BadgeBtn = ({ href, icon, n, title }) => html`<a class="btn icon-btn badge-btn" href=${href} title=${title} aria-label=${title}><${Icon} n=${icon} fill=${n > 0} />${n > 0 && html`<span class="dot-badge">${n > 9 ? '9+' : n}</span>`}</a>`;
 
 const GAMES = [
   { id: 'x01', icon: 'sports_score', shape: 'cookie', c: 'c-primary' },
@@ -31,6 +77,7 @@ export function Home() {
   const st = useStore();
   const active = st.active;
   const s = active ? computeActive(active) : null;
+  const counts = useSocialCounts();
 
   const quick = (start) => {
     const last = st.lastSetup.x01;
@@ -41,7 +88,8 @@ export function Home() {
   return html`<div class="screen-enter">
     <header class="topbar">
       <div class="brand grow"><span class="brand-word">nine<b>darter</b></span></div>
-      <a class="btn icon-btn" href="#/settings" title=${t('nav.settings')}><${Icon} n="tune" /></a>
+      ${st.account && html`<${BadgeBtn} href="#/messages" icon="chat" n=${counts.unread} title=${t('nav.messages')} />`}
+      <${BadgeBtn} href="#/notifications" icon="notifications" n=${counts.total} title=${t('nav.notifications')} />
     </header>
 
     ${active && html`<div class="card tertiary row" style="margin-bottom:16px;border-radius:var(--r-2xl)">
@@ -57,6 +105,7 @@ export function Home() {
       </div>
     </div>`}
 
+    <div class="hero-row">
     <section class="hero">
       <${Shape} name="cookie" cls="deco" />
       <${Shape} name="flower" cls="deco2" />
@@ -67,10 +116,12 @@ export function Home() {
         ${[501, 301].map((n) => html`<${Btn} kind="tonal" size="m" onClick=${() => quick(n)}>${n}<//>`)}
       </div>
     </section>
+    <${Welcome} />
+    </div>
 
-    <h2 class="title-m section-title">${t('home.games')}</h2>
+    <h2 class="title-m section-title"><${Icon} n="sports_score" size=${20} /> ${t('home.games')}</h2>
     <div class="grid auto">${GAMES.map((m) => html`<${ModeCard} m=${m} />`)}</div>
-    <h2 class="title-m section-title">${t('home.practice')}</h2>
+    <h2 class="title-m section-title"><${Icon} n="fitness_center" size=${20} /> ${t('home.practice')}</h2>
     <div class="grid auto practice">${PRACTICE.map((m) => html`<${ModeCard} m=${m} small />`)}</div>
 
     ${st.matches.length > 0 && html`

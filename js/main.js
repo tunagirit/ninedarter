@@ -11,8 +11,9 @@ import { Stats } from './screens/stats.js';
 import { Profile, newPasswordDialog } from './screens/profile.js';
 import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
+import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.0.2b';
+export const VERSION = '1.0.3';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -39,7 +40,7 @@ const NAV = [
 ];
 
 function Nav({ current }) {
-  const top = ['play', 'game', 'result'].includes(current) ? '' : current;
+  const top = ['play', 'game', 'result', 'messages', 'notifications'].includes(current) ? '' : current === 'friend' ? 'profile' : current;
   return html`<nav class="navbar" aria-label="Main">
     <a class="rail-fab" href="#/play/x01" title=${t('home.quick')}><${Icon} n="sports_score" /></a>
     ${NAV.map((n) => html`<a class=${'nav-item' + (top === n.id ? ' active' : '')} href=${'#/' + n.id} aria-current=${top === n.id ? 'page' : null}>
@@ -73,6 +74,9 @@ function App() {
     case 'stats': screen = html`<${Stats} pid=${b} />`; break;
     case 'players': case 'profile': screen = html`<${Profile} />`; break;
     case 'settings': screen = html`<${Settings} />`; break;
+    case 'friend': screen = html`<${FriendPage} id=${b} key=${b} />`; break;
+    case 'messages': if (b) { full = true; screen = html`<${Chat} id=${b} key=${b} />`; } else screen = html`<${Messages} />`; break;
+    case 'notifications': screen = html`<${Notifications} />`; break;
     default: screen = html`<${Home} />`;
   }
   return html`<div class=${'shell' + (full ? ' fullscreen' : '')}>

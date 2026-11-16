@@ -59,6 +59,10 @@
 - **Profil** — profil fotoğrafı, kullanıcı adı, ortalamalar ve özet istatistikler
 - **Bulut senkronizasyonu** — maçlar ve istatistikler hesaba yedeklenir, cihazlar arasında eşitlenir; hesap açmadan önceki maçlar hesaba taşınır
 - **Çevrimiçi arkadaşlar** — kullanıcı adıyla arkadaş ekleme; arkadaşla oynanan maç iki tarafın geçmişine de düşer
+- **Arkadaş sayfası** — istatistikler, arkadaşlık tarihi ve karşılıklı skor
+- **Mesajlaşma** — arkadaşlarla sohbet, okundu bilgisi; **bildirimler** (arkadaşlık istekleri, yeni mesajlar)
+- **Görünen ad** — kullanıcı adından ayrı; boş bırakılırsa kullanıcı adı görünür
+- Ana ekranda profil fotoğraflı **hoş geldin kartı** ve son maç ortalamaları
 - **Çevrimdışı oyuncular** — Ayarlar'dan kayıtlı oyuncu isimleri; oyun kurarken Arkadaşlar / Çevrimdışı / Bot sekmelerinden seçim
 - Hesap açmadan da uygulama tamamen çevrimdışı çalışır
 
