@@ -1,0 +1,19 @@
+{
+  "name": "ninedarter",
+  "short_name": "ninedarter",
+  "description": "Material 3 Expressive darts scorer — X01, Cricket, training games, bots and stats.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f4fb",
+  "theme_color": "#5b3fc4",
+  "lang": "tr",
+  "categories": ["sports", "games", "utilities"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
