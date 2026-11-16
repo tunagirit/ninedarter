@@ -4,14 +4,28 @@ import { t } from '../i18n.js';
 import { Icon, Btn, Shape, Avatar, confirmDialog } from '../ui.js';
 import { computeActive, go, abandonMatch, startMatch } from '../match.js';
 import { modeName } from './common.js';
+import { winnerNames } from '../teams.js';
 
-const MODES = [
+const GAMES = [
   { id: 'x01', icon: 'sports_score', shape: 'cookie', c: 'c-primary' },
   { id: 'cricket', icon: 'grid_view', shape: 'clover', c: 'c-tertiary' },
+];
+const PRACTICE = [
+  { id: 'c121', icon: 'trending_up', shape: 'gem', c: 'c-primary' },
   { id: 'atc', icon: 'schedule', shape: 'sunny', c: 'c-secondary' },
   { id: 'bobs27', icon: 'adjust', shape: 'flower', c: 'c-success' },
-  { id: 'checkout', icon: 'flag', shape: 'burst', c: 'c-error' },
+  { id: 'doubles', icon: 'filter_2', shape: 'puffy', c: 'c-tertiary' },
+  { id: 'checkout', icon: 'shuffle', shape: 'burst', c: 'c-error' },
+  { id: 'shanghai', icon: 'stacks', shape: 'clover', c: 'c-secondary' },
+  { id: 'akyaka', icon: 'format_list_numbered', shape: 'flower', c: 'c-tertiary' },
 ];
+const MODES = [...GAMES, ...PRACTICE];
+const ModeCard = ({ m, small }) => html`<button class=${'mode-card ' + m.c + (small ? ' small' : '')} onClick=${() => go('#/play/' + m.id)}>
+  <div class="shape"><${Shape} name=${m.shape} /><${Icon} n=${m.icon} fill /></div>
+  <div class="title-l">${t('mode.' + m.id)}</div>
+  <div class="desc">${t('mode.' + m.id + '.desc')}</div>
+  <span class="go"><${Icon} n="arrow_outward" /></span>
+</button>`;
 
 export function Home() {
   const st = useStore();
@@ -54,15 +68,10 @@ export function Home() {
       </div>
     </section>
 
-    <h2 class="title-m section-title">${t('home.modes')}</h2>
-    <div class="grid auto">
-      ${MODES.map((m) => html`<button class=${'mode-card ' + m.c} onClick=${() => go('#/play/' + m.id)}>
-        <div class="shape"><${Shape} name=${m.shape} /><${Icon} n=${m.icon} fill /></div>
-        <div class="title-l">${t('mode.' + m.id)}</div>
-        <div class="desc">${t('mode.' + m.id + '.desc')}</div>
-        <span class="go"><${Icon} n="arrow_outward" /></span>
-      </button>`)}
-    </div>
+    <h2 class="title-m section-title">${t('home.games')}</h2>
+    <div class="grid auto">${GAMES.map((m) => html`<${ModeCard} m=${m} />`)}</div>
+    <h2 class="title-m section-title">${t('home.practice')}</h2>
+    <div class="grid auto practice">${PRACTICE.map((m) => html`<${ModeCard} m=${m} small />`)}</div>
 
     ${st.matches.length > 0 && html`
       <h2 class="title-m section-title">${t('home.recent')}</h2>
@@ -73,7 +82,7 @@ export function Home() {
 }
 
 export function RecentItem({ m }) {
-  const w = m.players.find((p) => p.id === m.winner);
+  const w = winnerNames(m);
   const d = new Date(m.date);
   return html`<button class="list-item" onClick=${() => go('#/result/' + m.id)}>
     <div class="lead"><${Icon} n=${MODES.find((x) => x.id === m.type)?.icon || 'sports_score'} /></div>
@@ -82,7 +91,7 @@ export function RecentItem({ m }) {
       <div class="meta">${m.players.map((p) => p.name).join(' · ')}</div>
     </div>
     <div style="text-align:right">
-      ${w && m.players.length > 1 && html`<div class="badge win">${w.name}</div>`}
+      ${w && m.players.length > 1 && html`<div class="badge win">${w}</div>`}
       <div class="meta">${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
   </button>`;

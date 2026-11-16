@@ -2,7 +2,7 @@
 import { getState, update } from './store.js';
 import * as x01 from './engines/x01.js';
 import * as cricket from './engines/cricket.js';
-import { atc, bobs, checkout } from './engines/training.js';
+import { atc, bobs, checkout, c121, doubles, shanghai } from './engines/training.js';
 import { uid } from './darts.js';
 
 export const ENGINES = {
@@ -11,6 +11,9 @@ export const ENGINES = {
   atc: { compute: atc.compute, stats: atc.stats },
   bobs27: { compute: bobs.compute, stats: bobs.stats },
   checkout: { compute: checkout.compute, stats: checkout.stats },
+  c121: { compute: c121.compute, stats: c121.stats },
+  doubles: { compute: doubles.compute, stats: doubles.stats },
+  shanghai: { compute: shanghai.compute, stats: shanghai.stats },
 };
 
 export const go = (hash) => { location.hash = hash; };
@@ -56,7 +59,8 @@ function finishMatch(st) {
   const stats = ENGINES[a.type].stats(st, a.config);
   const rec = {
     id: a.id, type: a.type, date: a.started, ended: Date.now(), config: a.config, actions: a.actions,
-    players: a.config.players, winner: a.config.players[st.winner]?.id ?? null, stats,
+    players: a.config.players, stats,
+    ...(a.config.teams ? { winner: null, winners: (a.config.teams[st.winner] || []).map((i) => a.config.players[i].id) } : { winner: a.config.players[st.winner]?.id ?? null }),
   };
   update((s) => { s.matches = [rec, ...s.matches.filter((m) => m.id !== rec.id)]; s.active = null; });
   setTimeout(() => go('#/result/' + rec.id), 650);
@@ -70,7 +74,8 @@ export function abandonMatch() {
 export function rematch(rec) {
   const cfg = structuredClone(rec.config);
   // rotate the starting player
-  if (cfg.players.length > 1) cfg.players.push(cfg.players.shift());
+  if (cfg.teams) cfg.teams.push(cfg.teams.shift());
+  else if (cfg.players.length > 1) cfg.players.push(cfg.players.shift());
   if (rec.type === 'checkout') cfg.seed = Math.floor(Math.random() * 1e9);
   startMatch(rec.type, cfg);
 }

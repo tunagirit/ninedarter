@@ -12,7 +12,12 @@ import { Profile, newPasswordDialog } from './screens/profile.js';
 import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 
-export const VERSION = '1.0.1';
+export const VERSION = '1.0.2';
+
+// PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
+window.__installPrompt = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; dispatchEvent(new Event('nd-installable')); });
+addEventListener('appinstalled', () => { window.__installPrompt = null; dispatchEvent(new Event('nd-installable')); });
 
 function useHash() {
   const get = () => (location.hash.replace(/^#\/?/, '') || '').split('/').filter(Boolean);
@@ -61,7 +66,7 @@ function App() {
   const [a, b] = route;
   let screen, full = false;
   switch (a) {
-    case 'play': screen = html`<${Setup} type=${b || 'x01'} key=${b} />`; break;
+    case 'play': screen = b === 'akyaka' ? html`<${Setup} type="cricket" preset="akyaka" key="akyaka" />` : html`<${Setup} type=${b || 'x01'} key=${b} />`; break;
     case 'game': full = true; screen = st.active ? html`<${Game} key=${st.active.id} />` : html`<${Home} />`; break;
     case 'result': screen = html`<${Result} id=${b} key=${b} />`; break;
     case 'history': screen = html`<${History} />`; break;

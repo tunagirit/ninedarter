@@ -22,7 +22,7 @@ export const atc = {
         if (s.pos[p] >= targets.length) break;
       }
       s.visits.push({ p, hits: a.hits.slice(0, used) });
-      if (s.pos[p] >= targets.length) { s.finished = true; s.winner = p; s.event = { type: 'match', p }; break; }
+      if (s.pos[p] >= targets.length) { s.finished = true; s.winner = p; s.event = { type: 'match', side: p, p }; break; }
       s.current = (p + 1) % n;
     }
     return s;
@@ -56,7 +56,7 @@ export const bobs = {
         s.finished = true;
         let best = 0;
         for (let i = 1; i < n; i++) if ((s.out[i] ? -1e9 + s.round[i] : s.score[i]) > (s.out[best] ? -1e9 + s.round[best] : s.score[best])) best = i;
-        s.winner = best; s.event = { type: 'match', p: best };
+        s.winner = best; s.event = { type: 'match', side: best, p: best };
       } else s.current = next;
     }
     return s;
@@ -66,7 +66,95 @@ export const bobs = {
   },
 };
 
-// ---------------- Checkout practice ----------------
+// ---------------- 121 Checkout ----------------
+// Start on 121 with 9 darts (3 visits) to check out on a double. Success: next target +1. Miss: target -1 (never below the start).
+export const c121 = {
+  compute(config, actions) {
+    const start = config.start || 121;
+    const s = { n: 1, target: start, best: 0, results: [], current: 0, finished: false, winner: 0, event: null };
+    for (const a of actions) {
+      if (s.finished) break;
+      s.results.push({ target: s.target, ok: a.ok, darts: a.ok ? a.darts : 9 });
+      if (a.ok) { s.best = Math.max(s.best, s.target); s.target++; } else s.target = Math.max(start, s.target - 1);
+      if (s.results.length >= config.rounds) { s.finished = true; s.event = { type: 'match', side: 0 }; }
+    }
+    return s;
+  },
+  stats(s) {
+    const ok = s.results.filter((r) => r.ok);
+    return [{ attempts: s.results.length, hits: ok.length, pct: s.results.length ? (ok.length / s.results.length) * 100 : 0, best: s.best, avgDarts: ok.length ? ok.reduce((a, r) => a + r.darts, 0) / ok.length : 0, final: s.target }];
+  },
+};
+
+// ---------------- Doubles training ----------------
+// 3 darts at each double D1..D20 and Bull, count hits.
+export const doubles = {
+  targets: [...Array.from({ length: 20 }, (_, i) => i + 1), 25],
+  compute(config, actions) {
+    const n = config.players.length;
+    const T = doubles.targets;
+    const s = { n, targets: T, round: Array(n).fill(0), hits: Array(n).fill(0), perTarget: Array.from({ length: n }, () => ({})), current: 0, visits: [], finished: false, winner: null, event: null };
+    for (const a of actions) {
+      if (s.finished) break;
+      const p = s.current;
+      const tgt = T[s.round[p]];
+      s.hits[p] += a.hits; s.perTarget[p][tgt] = a.hits;
+      s.visits.push({ p, target: tgt, hits: a.hits });
+      s.round[p]++;
+      if (s.round.every((r) => r >= T.length)) {
+        s.finished = true;
+        s.winner = s.hits.indexOf(Math.max(...s.hits));
+        s.event = { type: 'match', side: s.winner };
+      } else s.current = (p + 1) % n;
+    }
+    return s;
+  },
+  stats(s, config) {
+    return config.players.map((_, p) => {
+      const pt = s.perTarget[p];
+      const best = Object.entries(pt).sort((a, b) => b[1] - a[1])[0];
+      return { score: s.hits[p], hits: s.hits[p], darts: s.round[p] * 3, hitPct: s.round[p] ? (s.hits[p] / (s.round[p] * 3)) * 100 : 0, rounds: s.round[p], bestDouble: best && best[1] > 0 ? (best[0] === '25' ? 'Bull' : 'D' + best[0]) : '–' };
+    });
+  },
+};
+
+// ---------------- Shanghai ----------------
+// Round r targets number r. Single = r, double = 2r, treble = 3r. Single+double+treble in one round = Shanghai (instant win).
+export const shanghai = {
+  compute(config, actions) {
+    const n = config.players.length;
+    const R = config.rounds || 7;
+    const s = { n, rounds: R, round: Array(n).fill(0), score: Array(n).fill(0), current: 0, visits: [], finished: false, winner: null, event: null, shanghai: null };
+    for (const a of actions) {
+      if (s.finished) break;
+      const p = s.current;
+      const tgt = s.round[p] + 1;
+      const ms = a.darts.map((d) => d.m || 0);
+      const pts = ms.reduce((x, m) => x + m * tgt, 0);
+      s.score[p] += pts;
+      const isSh = [1, 2, 3].every((m) => ms.includes(m));
+      s.visits.push({ p, target: tgt, ms, pts, shanghai: isSh });
+      s.round[p]++;
+      if (isSh) { s.finished = true; s.winner = p; s.shanghai = p; s.event = { type: 'match', side: p }; break; }
+      if (s.round.every((r) => r >= R)) {
+        s.finished = true;
+        s.winner = s.score.indexOf(Math.max(...s.score));
+        s.event = { type: 'match', side: s.winner };
+      } else s.current = (p + 1) % n;
+    }
+    return s;
+  },
+  stats(s, config) {
+    return config.players.map((_, p) => {
+      const v = s.visits.filter((x) => x.p === p);
+      const darts = v.length * 3;
+      const hits = v.reduce((a, x) => a + x.ms.filter((m) => m > 0).length, 0);
+      return { score: s.score[p], rounds: v.length, darts, hits, hitPct: darts ? (hits / darts) * 100 : 0, shanghai: s.shanghai === p ? 1 : 0, high: v.reduce((a, x) => Math.max(a, x.pts), 0) };
+    });
+  },
+};
+
+// ---------------- Random checkout practice ----------------
 export const checkout = {
   sequence(config) {
     const r = rng(config.seed);
@@ -85,7 +173,7 @@ export const checkout = {
       if (s.finished) break;
       s.results.push({ target: seq[s.idx], ok: a.ok, darts: a.darts || 3 });
       s.idx++;
-      if (s.idx >= seq.length) { s.finished = true; s.event = { type: 'match', p: 0 }; }
+      if (s.idx >= seq.length) { s.finished = true; s.event = { type: 'match', side: 0, p: 0 }; }
     }
     return s;
   },

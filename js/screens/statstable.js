@@ -38,6 +38,25 @@ const ROWS = {
     ['stats.hitPct', (s) => s.hitPct, fmtPct, true],
     ['stats.rounds', (s) => s.rounds, (v) => v, true],
   ],
+  c121: [
+    ['stats.best', (s) => s.best, (v) => v || '–', true],
+    ['stats.successRate', (s) => s.pct, fmtPct, true],
+    ['stats.checkouts', (s) => s.hits, (v) => v, true],
+    ['stats.attempts', (s) => s.attempts, (v) => v, null],
+    ['stats.avgDarts', (s) => (s.hits ? s.avgDarts : null), fmt1, false],
+  ],
+  doubles: [
+    ['stats.hits', (s) => s.hits, (v) => v, true],
+    ['stats.hitPct', (s) => s.hitPct, fmtPct, true],
+    ['stats.bestDouble', (s) => s.bestDouble, (v) => v, null],
+    ['stats.darts', (s) => s.darts, (v) => v, null],
+  ],
+  shanghai: [
+    ['stats.score', (s) => s.score, (v) => v, true],
+    ['stats.hitPct', (s) => s.hitPct, fmtPct, true],
+    ['stats.high', (s) => s.high, (v) => v, true],
+    ['Shanghai', (s) => s.shanghai, (v) => (v ? '✓' : '–'), true],
+  ],
   checkout: [
     ['stats.successRate', (s) => s.pct, fmtPct, true],
     ['stats.checkouts', (s) => s.hits, (v) => v, true],

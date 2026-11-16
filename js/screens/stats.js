@@ -4,6 +4,7 @@ import { t } from '../i18n.js';
 import { Seg, Avatar, EmptyState, Btn, fmt1, fmtPct } from '../ui.js';
 import { go } from '../match.js';
 import { TopBar } from './common.js';
+import { isWinner } from '../teams.js';
 
 function playerMatches(matches, pid, types) {
   return matches.filter((m) => types.includes(m.type) && m.players.some((p) => p.id === pid))
@@ -16,7 +17,7 @@ export function aggregateX01(matches, pid) {
   const list = playerMatches(matches, pid, ['x01']);
   const a = { n: list.length, wins: 0, multi: 0, points: 0, darts: 0, f9p: 0, f9d: 0, t180: 0, t140: 0, t100: 0, t60: 0, dbl: 0, co: 0, hiCo: 0, best: null, high: 0, series: [] };
   for (const { m, s } of list) {
-    if (m.players.length > 1) { a.multi++; if (m.winner === pid) a.wins++; }
+    if (m.players.length > 1) { a.multi++; if (isWinner(m, pid)) a.wins++; }
     a.points += s.points; a.darts += s.darts; a.f9p += s.f9points; a.f9d += s.f9darts;
     a.t180 += s.t180; a.t140 += s.t140; a.t100 += s.t100; a.t60 += s.t60; a.dbl += s.dblDarts; a.co += s.checkouts;
     a.hiCo = Math.max(a.hiCo, s.hiCo); a.high = Math.max(a.high, s.high);
@@ -77,7 +78,7 @@ export function Stats({ pid }) {
   } else if (type === 'cricket') {
     const list = playerMatches(st.matches, sel.id, ['cricket']);
     let marks = 0, rounds = 0, wins = 0, multi = 0, five = 0;
-    for (const { m, s } of list) { marks += s.marks; rounds += s.rounds; five += s.fivePlus; if (m.players.length > 1) { multi++; if (m.winner === sel.id) wins++; } }
+    for (const { m, s } of list) { marks += s.marks; rounds += s.rounds; five += s.fivePlus; if (m.players.length > 1) { multi++; if (isWinner(m, sel.id)) wins++; } }
     body = list.length ? html`<div class="stat-tiles">
         <${Tile} hero k=${t('stats.mpr')} v=${fmt1(rounds ? marks / rounds : 0)} />
         <${Tile} k=${t('stats.matches')} v=${list.length} />
@@ -89,9 +90,18 @@ export function Stats({ pid }) {
     const atc = playerMatches(st.matches, sel.id, ['atc']);
     const bob = playerMatches(st.matches, sel.id, ['bobs27']);
     const ck = playerMatches(st.matches, sel.id, ['checkout']);
+    const c1 = playerMatches(st.matches, sel.id, ['c121']);
+    const db = playerMatches(st.matches, sel.id, ['doubles']);
+    const sh = playerMatches(st.matches, sel.id, ['shanghai']);
     const done = atc.filter((x) => x.s.done);
     const ckA = ck.reduce((a, x) => a + x.s.attempts, 0), ckH = ck.reduce((a, x) => a + x.s.hits, 0);
-    body = atc.length + bob.length + ck.length ? html`
+    body = atc.length + bob.length + ck.length + c1.length + db.length + sh.length ? html`
+      <div class="title-m section-title">${t('mode.c121')}</div>
+      <div class="stat-tiles"><${Tile} k=${t('stats.played')} v=${c1.length} /><${Tile} k=${t('stats.best')} v=${c1.length ? Math.max(...c1.map((x) => x.s.best)) || '–' : '–'} /><${Tile} k=${t('stats.successRate')} v=${c1.length ? fmtPct(c1.reduce((a, x) => a + x.s.pct, 0) / c1.length) : '–'} /></div>
+      <div class="title-m section-title">${t('mode.doubles')}</div>
+      <div class="stat-tiles"><${Tile} k=${t('stats.played')} v=${db.length} /><${Tile} k=${t('stats.bestScore')} v=${db.length ? Math.max(...db.map((x) => x.s.hits)) : '–'} /><${Tile} k=${t('stats.hitPct')} v=${db.length ? fmtPct(db.reduce((a, x) => a + x.s.hitPct, 0) / db.length) : '–'} /></div>
+      <div class="title-m section-title">${t('mode.shanghai')}</div>
+      <div class="stat-tiles"><${Tile} k=${t('stats.played')} v=${sh.length} /><${Tile} k=${t('stats.bestScore')} v=${sh.length ? Math.max(...sh.map((x) => x.s.score)) : '–'} /><${Tile} k="Shanghai" v=${sh.reduce((a, x) => a + (x.s.shanghai || 0), 0)} /></div>
       <div class="title-m section-title">${t('mode.atc')}</div>
       <div class="stat-tiles"><${Tile} k=${t('stats.played')} v=${atc.length} /><${Tile} k=${t('stats.bestDarts')} v=${done.length ? Math.min(...done.map((x) => x.s.darts)) : '–'} /><${Tile} k=${t('stats.hitPct')} v=${atc.length ? fmtPct(atc.reduce((a, x) => a + x.s.hitPct, 0) / atc.length) : '–'} /></div>
       <div class="title-m section-title">${t('mode.bobs27')}</div>

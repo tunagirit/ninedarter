@@ -3,13 +3,14 @@ import { useStore, mePlayer, friendPlayer, offlinePlayer } from '../store.js';
 import { t } from '../i18n.js';
 import { Icon, IconBtn, Btn, Seg, Switch, Slider, Avatar, snack, openDialog, haptic } from '../ui.js';
 import { startMatch, playerFromBot } from '../match.js';
-import { BOT_LEVELS } from '../bot.js';
+import { BOT_LEVELS, CRICKET_MPR } from '../bot.js';
 import { TopBar, Stepper } from './common.js';
 import { newOfflinePlayerDialog } from './players.js';
 import { cloudEnabled } from '../cloud.js';
 
 const SUPPORTS_BOT = { x01: true, cricket: true };
-const MAX_PLAYERS = { x01: 8, cricket: 4, atc: 8, bobs27: 8, checkout: 1 };
+const MAX_PLAYERS = { x01: 8, cricket: 4, atc: 8, bobs27: 8, checkout: 1, c121: 1, doubles: 8, shanghai: 8 };
+const SUPPORTS_TEAMS = { x01: true, cricket: true };
 const KIND_ICON = { me: 'person', friend: 'cloud', offline: 'person_outline', bot: 'smart_toy' };
 
 /** Rebuild a roster entry from a saved snapshot, against current data (drops unknown players). */
@@ -74,10 +75,10 @@ function addPlayersDialog({ st, roster, room, allowBot }) {
   });
 }
 
-export function Setup({ type }) {
+export function Setup({ type, preset }) {
   const st = useStore();
   const last = st.lastSetup[type] || {};
-  const maxP = MAX_PLAYERS[type];
+  const maxP = SUPPORTS_TEAMS[type] ? 8 : MAX_PLAYERS[type];
   const [roster, setRoster] = useState(() => {
     const seen = new Set();
     const r = (last.players || []).map((p) => resolve(p, st)).filter((p) => p && (!p.bot || SUPPORTS_BOT[type]) && !seen.has(p.id) && seen.add(p.id));
@@ -94,7 +95,15 @@ export function Setup({ type }) {
   const [legs, setLegs] = useState(last.legsN || 3);
   const [setsN, setSetsN] = useState(last.setsN || 3);
   // Cricket
-  const [variant, setVariant] = useState(last.variant || 'standard');
+  const [cMode, setCMode] = useState(preset || (type === 'cricket' && last.mode ? last.mode : 'cricket'));
+  const [cut, setCut] = useState(!!last.cutthroat || last.variant === 'cutthroat');
+  // Teams
+  const [teamMode, setTeamMode] = useState(!!(SUPPORTS_TEAMS[type] && last.teams));
+  const [nTeams, setNTeams] = useState(last.teams?.length || 2);
+  const [teamOf, setTeamOf] = useState(() => { const m = {}; (last.teams || []).forEach((tm, k) => tm.forEach((pi) => { const id = last.players?.[pi]?.id; if (id) m[id] = k; })); return m; });
+  // 121 / Shanghai
+  const [c121Rounds, setC121Rounds] = useState(type === 'c121' ? last.rounds || 10 : 10);
+  const [shRounds, setShRounds] = useState(type === 'shanghai' ? last.rounds || 7 : 7);
   const [rounds, setRounds] = useState(last.rounds ?? 0);
   const [cLegs, setCLegs] = useState(last.legsToWin || 1);
   // ATC
@@ -105,6 +114,7 @@ export function Setup({ type }) {
   const [ckRounds, setCkRounds] = useState(last.rounds || 10);
 
   const total = roster.length;
+  const teamIdx = (p, i) => (teamOf[p.id] ?? i % nTeams) % nTeams;
   const toFirst = (n) => (fmt === 'best' ? Math.floor(n / 2) + 1 : n);
 
   const begin = () => {
@@ -113,10 +123,20 @@ export function Setup({ type }) {
     const players = roster.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, kind: p.kind, ...(p.bot ? { bot: p.bot } : {}), ...(p.photo && /^https?:/.test(p.photo) ? { photo: p.photo } : {}) }));
     let cfg;
     if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN) };
-    else if (type === 'cricket') cfg = { players, variant, rounds, legsToWin: cLegs };
+    else if (type === 'cricket') cfg = { players, mode: cMode, cutthroat: cMode !== 'akyaka' && cut, rounds, legsToWin: cLegs };
     else if (type === 'atc') cfg = { players, mode: atcMode, bull };
-    else if (type === 'bobs27') cfg = { players };
+    else if (type === 'bobs27' || type === 'doubles') cfg = { players };
+    else if (type === 'c121') cfg = { players: players.slice(0, 1), start: 121, rounds: c121Rounds };
+    else if (type === 'shanghai') cfg = { players, rounds: shRounds };
     else if (type === 'checkout') { const [min, max] = range.split('-').map(Number); cfg = { players: players.slice(0, 1), min, max, rounds: ckRounds, seed: Math.floor(Math.random() * 1e9) }; }
+    if (type === 'cricket' && !teamMode && players.length > MAX_PLAYERS.cricket) return snack(t('setup.tooMany', { n: MAX_PLAYERS.cricket }));
+    if (teamMode && SUPPORTS_TEAMS[type]) {
+      const teams = Array.from({ length: nTeams }, () => []);
+      roster.forEach((p, i) => teams[teamIdx(p, i)].push(i));
+      const filled = teams.filter((tm) => tm.length);
+      if (filled.length < 2) return snack(t('setup.needTeams'));
+      cfg.teams = filled;
+    }
     startMatch(type, cfg);
   };
 
@@ -130,22 +150,26 @@ export function Setup({ type }) {
     const picked = await addPlayersDialog({ st, roster, room: maxP - roster.length, allowBot: SUPPORTS_BOT[type] });
     if (picked?.length) setRoster((r) => [...r, ...picked.filter((p) => !r.some((x) => x.id === p.id))].slice(0, maxP));
   };
-  const kindLabel = (p) => (p.bot ? `${t('setup.level')} ${p.bot} · ~${BOT_LEVELS[p.bot - 1].avg} ${t('stats.avgShort')}` : t('kind.' + p.kind));
+  const kindLabel = (p) => (p.bot ? (type === 'cricket' ? `${t('setup.level')} ${p.bot} · ~${CRICKET_MPR[p.bot - 1].toFixed(1)} MPR` : `${t('setup.level')} ${p.bot} · ~${BOT_LEVELS[p.bot - 1].avg} ${t('stats.avgShort')}`) : t('kind.' + p.kind));
 
   const fmtLabel = (n, one, many) => `${n} ${t(n === 1 ? one : many)}`;
 
   return html`<div class="screen-enter">
-    <${TopBar} title=${t('mode.' + type)} back="#/" />
+    <${TopBar} title=${type === 'cricket' && cMode === 'akyaka' ? t('cricket.akyaka') : t('mode.' + type)} back="#/" />
     <div class="setup-grid setup-pad">
       <div class="card stack">
         <div class="row between">
           <div class="title-l">${t('setup.players')} <span class="muted title-m">${total}/${maxP}</span></div>
           ${roster.length > 1 && html`<${Btn} kind="text" size="s" icon="shuffle" onClick=${shuffle}>${t('setup.shuffle')}<//>`}
         </div>
-        ${roster.length > 1 && html`<div class="body-s muted" style="margin-top:-8px">${t('setup.orderHint')}</div>`}
+        ${SUPPORTS_TEAMS[type] && html`<div class="grid cols-2">
+          <${Seg} size="s" value=${teamMode} onChange=${setTeamMode} options=${[{ value: false, label: t('setup.solo'), icon: 'person' }, { value: true, label: t('setup.teams'), icon: 'groups' }]} />
+          ${teamMode && html`<${Seg} size="s" value=${nTeams} onChange=${setNTeams} options=${[2, 3, 4].map((v) => ({ value: v, label: t('setup.nTeams', { n: v }), icon: false }))} />`}
+        </div>`}
+        ${roster.length > 1 && html`<div class="body-s muted" style="margin-top:-8px">${t(teamMode ? 'setup.teamHint' : 'setup.orderHint')}</div>`}
         <div class="roster">
           ${roster.map((p, i) => html`<div class="roster-row" key=${p.id}>
-            <span class="order">${i + 1}</span>
+            ${teamMode && SUPPORTS_TEAMS[type] ? html`<button class=${'team-chip k' + teamIdx(p, i)} title=${t('setup.changeTeam')} onClick=${() => { haptic(8); setTeamOf({ ...teamOf, [p.id]: (teamIdx(p, i) + 1) % nTeams }); }}>${teamIdx(p, i) + 1}</button>` : html`<span class="order">${i + 1}</span>`}
             <${Avatar} p=${p} size="l" />
             <div class="grow" style="min-width:0">
               <div class="title-m ellipsis">${p.name}</div>
@@ -191,12 +215,14 @@ export function Setup({ type }) {
           </div>
         `}
         ${type === 'cricket' && html`
-          <div class="field"><span class="label-l">${t('setup.variant')}</span>
-            <${Seg} value=${variant} onChange=${setVariant} options=${[{ value: 'standard', label: t('setup.standard') }, { value: 'cutthroat', label: t('setup.cutthroat') }]} /></div>
+          <div class="field"><span class="label-l">${t('setup.game')}</span>
+            <${Seg} value=${cMode} onChange=${setCMode} wrap options=${['cricket', 'tactics', 'fullboard', 'akyaka'].map((v) => ({ value: v, label: t('cricket.' + v) }))} /></div>
+          <div class="body-s muted">${t('cricket.' + cMode + '.desc')}</div>
+          ${cMode !== 'akyaka' && html`<div class="setting" style="border-radius:var(--r-l)"><${Icon} n="gavel" /><div class="grow"><div class="title-s">${t('setup.penalty')}</div><div class="body-s muted">${t('setup.penaltySub')}</div></div><${Switch} checked=${cut} onChange=${setCut} label=${t('setup.penalty')} /></div>`}
           <div class="field"><span class="label-l">${t('setup.roundLimit')}</span>
             <${Seg} value=${rounds} onChange=${setRounds} options=${[0, 15, 20, 25].map((v) => ({ value: v, label: v ? String(v) : t('setup.none'), icon: false }))} /></div>
           <div class="row between"><span class="label-l muted">${t('setup.firstTo')} (${t('setup.legs')})</span><${Stepper} value=${cLegs} max=${15} onChange=${setCLegs} label=${t('setup.legs')} /></div>
-          <div class="body-s muted">${t(variant === 'cutthroat' ? 'setup.cutthroat.desc' : 'setup.standard.desc')}</div>
+          ${cMode !== 'akyaka' && html`<div class="body-s muted">${t(cut ? 'setup.cutthroat.desc' : 'setup.standard.desc')}</div>`}
         `}
         ${type === 'atc' && html`
           <div class="field"><span class="label-l">${t('setup.target')}</span>
@@ -205,6 +231,13 @@ export function Setup({ type }) {
           <div class="body-s muted">${t('mode.atc.long')}</div>
         `}
         ${type === 'bobs27' && html`<div class="body-m">${t('mode.bobs27.long')}</div>`}
+        ${type === 'doubles' && html`<div class="body-m">${t('mode.doubles.long')}</div>`}
+        ${type === 'c121' && html`<div class="field"><span class="label-l">${t('setup.rounds')}</span>
+            <${Seg} value=${c121Rounds} onChange=${setC121Rounds} options=${[10, 20, 30].map((v) => ({ value: v, label: String(v), icon: false }))} /></div>
+          <div class="body-m">${t('mode.c121.long')}</div>`}
+        ${type === 'shanghai' && html`<div class="field"><span class="label-l">${t('setup.rounds')}</span>
+            <${Seg} value=${shRounds} onChange=${setShRounds} options=${[{ value: 7, label: '1–7', icon: false }, { value: 20, label: '1–20', icon: false }]} /></div>
+          <div class="body-m">${t('mode.shanghai.long')}</div>`}
         ${type === 'checkout' && html`
           <div class="field"><span class="label-l">${t('setup.range')}</span>
             <${Seg} wrap value=${range} onChange=${setRange} options=${['2-40', '41-100', '101-130', '131-170', '2-170'].map((v) => ({ value: v, label: v.replace('-', '–'), icon: false }))} /></div>

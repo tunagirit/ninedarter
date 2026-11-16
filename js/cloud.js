@@ -33,7 +33,13 @@ export async function initCloud() {
     const c = await sb();
     c.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setCloud({ recovery: true });
-      if (event === 'SIGNED_OUT') { update((s) => { s.account = null; s.friends = []; s.friendReqs = []; }); }
+      if (event === 'SIGNED_OUT') {
+        // Back to a clean guest: no account identity, no saved players on this device
+        update((s) => {
+          s.account = null; s.friends = []; s.friendReqs = []; s.players = []; s.lastSetup = {};
+          s.profile = { localId: 'g' + Math.random().toString(36).slice(2, 12), name: '', photo: null, hue: 285, shape: 'cookie', linked: false };
+        });
+      }
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) setTimeout(() => loadAccount(session.user), 0);
     });
     if (hadAuthHash) {

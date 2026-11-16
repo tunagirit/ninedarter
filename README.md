@@ -19,16 +19,23 @@
 ## Özellikler
 
 ### Oyunlar
-- **X01** — 301 / 501 / 701 / 1001 veya özel başlangıç skoru
-  - Giriş: Straight / Double / Master in
-  - Çıkış: Double / Straight / Master out
+- **Maç Oyna (X01)** — 301 / 501 / 701 / 1001 veya özel başlangıç skoru
+  - Giriş: Straight / Double / Master in · Çıkış: Double / Straight / Master out
   - “İlk N” veya “En iyi N” formatı, **leg** ya da **set** modu
-  - 8 oyuncuya kadar, sıra karıştırma, leg/set başlangıcı otomatik döner
-- **Cricket** — Standart ve Cut-throat, isteğe bağlı tur limiti, çoklu leg
+  - 8 oyuncuya kadar veya **takım modu** (2–4 takım), leg/set başlangıcı otomatik döner
+- **Cricket** — dört oyun türü, **cezalı mod** (cut-throat) açılıp kapatılabilir, takım modu, tur limiti, çoklu leg
+  - **Cricket:** 20–15 ve Bull
+  - **Fullboard:** 20'den 1'e tüm sayılar
+  - **Tactics:** Fullboard + Double, Triple ve Bull (house)
+  - **Akyaka:** sıralı Cricket — önce 20, sonra 19 … 15, en son toplam 3 Bull; sıradaki hedef kapanmadan diğerleri işlemez
 - **Antrenman**
+  - **121 Checkout** — 9 dartta bitir, hedef yükselsin
   - **Saat Yönünde** (Around the Clock) — herhangi / double / triple hedefler, Bull ile bitiş
   - **Bob's 27** — double antrenmanı
-  - **Checkout** — seçilen aralıkta rastgele bitiriş antrenmanı, önerilen rota ile
+  - **Doubles Training** — D1–D20 ve Bull'a 3'er dart
+  - **Rastgele Checkout** — seçilen aralıkta rastgele bitirişler, önerilen rota ile
+  - **Shanghai** — 1–7 veya 1–20; single + double + triple = anında galibiyet
+  - **Akyaka** — sıralı Cricket (Cricket ekranından da seçilebilir)
 
 ### Skor girişi
 - **Toplam skor tuş takımı** — hızlı skor tuşları (26, 45, 60, 81, 100, 140, 180), fiziksel klavye desteği
@@ -38,7 +45,7 @@
 - Sınırsız **geri al**
 
 ### Botlar
-11 seviyeli bilgisayar rakibi (~25 → ~107 ortalama). Botlar gerçek bir dart tahtası geometrisi üzerinde, seviyeye göre sapma ile atış simüle eder ve checkout rotalarını takip eder. X01 ve Cricket'te kullanılabilir.
+11 seviyeli bilgisayar rakibi: X01'de ~25 → ~107 ortalama, Cricket'te ~0.5 → ~4.6 MPR. Botlar gerçek bir dart tahtası geometrisi üzerinde, seviyeye göre sapma ile atış simüle eder ve checkout rotalarını takip eder. X01 ve Cricket'te kullanılabilir.
 
 ### İstatistikler
 - 3 dart ortalaması, ilk 9 ortalaması, checkout %, en yüksek bitiriş, en iyi leg, 180 / 140+ / 100+ / 60+
@@ -60,6 +67,7 @@
 - **Sesli skor anonsu** (Web Speech API — “One hundred and eighty!”)
 - Yarım kalan maçı sonra sürdürme
 - Türkçe / English arayüz
+- Ayarlardan **uygulama olarak yükleme** (PWA)
 - Açık / koyu / sistem teması ve özelleştirilebilir tema rengi (dinamik renk)
 - JSON yedekleme / geri yükleme
 - **PWA** — ana ekrana eklenebilir, çevrimdışı çalışır. Tüm veriler yalnızca cihazınızda (localStorage) saklanır.

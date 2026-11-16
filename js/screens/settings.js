@@ -1,7 +1,7 @@
 import { html, useState, useEffect } from '../../vendor/preact-htm.js';
 import { useStore, update, exportData, importData, resetAll } from '../store.js';
 import { t } from '../i18n.js';
-import { Icon, Btn, Seg, Switch, Slider, confirmDialog, snack } from '../ui.js';
+import { Icon, Btn, Seg, Switch, Slider, confirmDialog, snack, openDialog } from '../ui.js';
 import { availableVoices, speak } from '../voice.js';
 import { TopBar } from './common.js';
 import { OfflinePlayers } from './players.js';
@@ -17,6 +17,18 @@ export function Settings() {
   const s = st.settings;
   const set = (k, v) => update((x) => { x.settings[k] = v; });
   const [voices, setVoices] = useState(availableVoices(s.lang));
+  const [canInstall, setCanInstall] = useState(!!window.__installPrompt);
+  useEffect(() => { const on = () => setCanInstall(!!window.__installPrompt); addEventListener('nd-installable', on); return () => removeEventListener('nd-installable', on); }, []);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const install = async () => {
+    const p = window.__installPrompt;
+    if (p) { p.prompt(); const r = await p.userChoice.catch(() => null); if (r?.outcome === 'accepted') snack(t('install.done')); window.__installPrompt = null; setCanInstall(false); return; }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    openDialog((close) => html`<div class="icon-head"><${Icon} n="install_mobile" size=${36} /></div>
+      <div class="headline-s" style="text-align:center">${t('install.title')}</div>
+      <div class="body-m">${t(ios ? 'install.ios' : 'install.other')}</div>
+      <div class="actions"><${Btn} kind="filled" onClick=${() => close()}>${t('common.ok')}<//></div>`);
+  };
   useEffect(() => { const id = setTimeout(() => setVoices(availableVoices(s.lang)), 400); return () => clearTimeout(id); }, [s.lang]);
 
   const doExport = () => {
@@ -40,6 +52,12 @@ export function Settings() {
 
   return html`<div class="screen-enter stack">
     <${TopBar} title=${t('nav.settings')} back=${false} />
+
+    <div class="card primary row install-card">
+      <${Icon} n=${standalone ? 'check_circle' : 'install_mobile'} size=${32} />
+      <div class="grow"><div class="title-m">${t(standalone ? 'install.installed' : 'install.title')}</div><div class="body-s">${t(standalone ? 'install.installedSub' : 'install.sub')}</div></div>
+      ${!standalone && html`<${Btn} kind="filled" icon="download" onClick=${install}>${t('install.btn')}<//>`}
+    </div>
 
     <div class="card stack">
       <div class="title-m">${t('settings.appearance')}</div>
@@ -79,7 +97,7 @@ export function Settings() {
 
     <div class="card stack s" style="align-items:center;text-align:center;margin-top:8px">
       <span class="brand-word">nine<b>darter</b></span>
-      <span class="body-m muted">v1.0.1 · ${t('settings.about')}</span>
+      <span class="body-m muted">v1.0.2 · ${t('settings.about')}</span>
       <a class="btn text s" href="https://github.com/tunagirit/ninedarter" id="gh-link" target="_blank" rel="noopener"><${Icon} n="code" />GitHub</a>
     </div>
   </div>`;

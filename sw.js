@@ -1,10 +1,10 @@
 // ninedarter service worker — offline-first app shell, runtime cache for fonts.
-const VERSION = 'nd-v1.0.1';
+const VERSION = 'nd-v1.0.2';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css', './icons/icon.svg',
   './vendor/preact-htm.js', './js/main.js', './js/store.js', './js/i18n.js', './js/ui.js', './js/voice.js', './js/darts.js', './js/bot.js', './js/match.js',
   './js/engines/x01.js', './js/engines/cricket.js', './js/engines/training.js',
-  './js/screens/home.js', './js/screens/setup.js', './js/screens/game.js', './js/screens/results.js', './js/screens/stats.js', './js/screens/players.js', './js/screens/settings.js', './js/screens/common.js', './js/screens/statstable.js', './js/screens/profile.js', './js/cloud.js', './js/config.js', './vendor/supabase.js', './icons/icon-192.png',
+  './js/screens/home.js', './js/screens/setup.js', './js/screens/game.js', './js/screens/results.js', './js/screens/stats.js', './js/screens/players.js', './js/screens/settings.js', './js/screens/common.js', './js/screens/statstable.js', './js/screens/profile.js', './js/cloud.js', './js/config.js', './js/teams.js', './vendor/supabase.js', './icons/icon-192.png',
 ];
 
 self.addEventListener('install', (e) => {

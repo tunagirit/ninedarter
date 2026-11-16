@@ -15,6 +15,10 @@ export const BOT_LEVELS = [
   { level: 10, sigma: 7, dsig: 4.8, avg: 97 },
   { level: 11, sigma: 6, dsig: 4.2, avg: 107 },
 ];
+// Cricket bots throw with a slightly wider spread so marks-per-round stays realistic (world class ≈ 4 MPR).
+export const CRICKET_SPREAD = 1.3;
+// Approximate Cricket marks-per-round for each level (simulated, bot vs same level)
+export const CRICKET_MPR = [0.5, 0.75, 1.2, 1.5, 1.9, 2.2, 2.5, 3.1, 3.5, 4.2, 4.6];
 
 export const botLevel = (level) => BOT_LEVELS.find((l) => l.level === level) || BOT_LEVELS[4];
 export const botSigma = (level) => botLevel(level).sigma;
@@ -67,18 +71,21 @@ export function botCricketVisit(cr, me, level, simulate) {
     const st = simulate(darts); // state after darts so far
     if (st.legOver) break;
     const t = cricketTarget(st, me);
-    darts.push(throwAt(t, lv.sigma));
+    darts.push(throwAt(t, lv.sigma * CRICKET_SPREAD));
   }
   return darts;
 }
 
 function cricketTarget(st, me) {
   const nums = st.numbers;
-  const aim = (n) => (n === 25 ? { n: 25, m: 2 } : { n, m: 3 });
   const others = st.marks.map((_, i) => i).filter((i) => i !== me);
   const someOpen = (n) => others.some((o) => st.marks[o][n] < 3);
+  // For the D/T beds aim at the highest number I still need too, so one dart counts twice.
+  const bedNumber = () => nums.find((x) => typeof x === 'number' && x !== 25 && st.marks[me][x] < 3) || 20;
+  const aim = (n) => (n === 25 ? { n: 25, m: 2 } : n === 'D' ? { n: bedNumber(), m: 2 } : n === 'T' ? { n: bedNumber(), m: 3 } : { n, m: 3 });
+  if (st.seq) { const nx = nums.find((x) => st.marks[me][x] < 3); return aim(nx ?? 25); }
   const oppPts = others.map((o) => st.points[o]);
-  const cut = st.variant === 'cutthroat';
+  const cut = !!st.cut;
   // Behind on points (standard: below the leader; cut-throat: not the lowest) -> score on a number I own.
   const behind = cut ? st.points[me] > Math.min(...oppPts) : st.points[me] < Math.max(...oppPts);
   if (behind) {

@@ -5,7 +5,8 @@ import { Icon, IconBtn, Btn, Seg, Avatar, Wavy, Shape, openDialog, snack, haptic
 import { pushAction, undo, go, abandonMatch } from '../match.js';
 import * as X01 from '../engines/x01.js';
 import * as CR from '../engines/cricket.js';
-import { atc as ATC, bobs as BOBS, checkout as CK } from '../engines/training.js';
+import { atc as ATC, bobs as BOBS, checkout as CK, c121 as C121, doubles as DBL, shanghai as SHA } from '../engines/training.js';
+import { sideName, isTeamGame } from '../teams.js';
 import { isValidVisitScore, minCheckoutDarts, checkoutRoute, evaluateDarts, dartLabel } from '../darts.js';
 import { callScore, callRequire, speak } from '../voice.js';
 import { modeName } from './common.js';
@@ -20,6 +21,9 @@ export function Game() {
   if (a.type === 'atc') return html`<${AtcGame} a=${a} />`;
   if (a.type === 'bobs27') return html`<${BobsGame} a=${a} />`;
   if (a.type === 'checkout') return html`<${CheckoutGame} a=${a} />`;
+  if (a.type === 'c121') return html`<${C121Game} a=${a} />`;
+  if (a.type === 'doubles') return html`<${DoublesGame} a=${a} />`;
+  if (a.type === 'shanghai') return html`<${ShanghaiGame} a=${a} />`;
   return null;
 }
 
@@ -69,12 +73,12 @@ function afterPush(a, ns) {
     const v = lastVisit(ns);
     if (v) callScore(v.score, { bust: v.bust, checkout: v.checkout });
     if (!ns.event && !ns.finished) {
-      const rem = ns.remaining[ns.current];
+      const rem = ns.remaining[ns.side];
       if (rem <= 170 && checkoutRoute(rem, 3, a.config.out) && !pl[ns.current].bot) callRequire(rem);
     }
   }
   if (ns.event) {
-    const name = pl[ns.event.p]?.name;
+    const name = sideName(a.config, ns.event.side ?? ns.event.p);
     if (ns.event.type === 'match') { confetti(); if (a.type !== 'x01') speak(t('game.matchWon', { name })); }
     else { snack(t(ns.event.type === 'set' ? 'game.setWon' : 'game.legWon', { name })); haptic(40); }
   }
@@ -116,6 +120,19 @@ function useLock() {
 }
 
 // ====================== X01 ======================
+/** Header of a side card: one avatar + name, or the team's members with the current thrower highlighted. */
+function SideHead({ config, side, s, activeSide }) {
+  const members = s.sides[side].map((i) => ({ i, p: config.players[i] }));
+  if (!isTeamGame(config)) {
+    const p = members[0].p;
+    return html`<${Avatar} p=${p} spin=${activeSide && p.bot} /><span class="title-m grow ellipsis">${p.name}</span>`;
+  }
+  return html`<div class="grow" style="min-width:0">
+    <div class="label-l">${sideName(config, side)}</div>
+    <div class="team-members">${members.map(({ i, p }) => html`<span class=${'tm' + (activeSide && i === s.current ? ' on' : '')}><${Avatar} p=${p} spin=${activeSide && i === s.current && p.bot} /><span class="ellipsis">${p.name}</span></span>`)}</div>
+  </div>`;
+}
+
 function X01Game({ a }) {
   const st = useStore();
   const set = st.settings;
@@ -129,9 +146,10 @@ function X01Game({ a }) {
   const [mult, setMult] = useState(1);
   const [locked, lock] = useLock();
   const cur = s.current;
+  const side = s.side;
   const pl = config.players[cur];
   const isBot = !!pl.bot;
-  const before = s.remaining[cur];
+  const before = s.remaining[side];
 
   useBot(a, s, () => X01.botAction(s, config));
   useEffect(() => { setPending([]); setEntry(''); setMult(1); }, [a.actions.length]);
@@ -154,7 +172,7 @@ function X01Game({ a }) {
       submit({ score, dartsUsed: res.used, dbl: askDbl ? res.dbl : 1 });
     } else {
       let dbl = 0;
-      if (set.askDoubles && config.out !== 'straight' && before <= 50 && before >= 2 && s.opened[cur]) {
+      if (set.askDoubles && config.out !== 'straight' && before <= 50 && before >= 2 && s.opened[side]) {
         const r = await doubleDialog(); if (r == null) return; dbl = r;
       }
       submit({ score, dbl });
@@ -185,7 +203,7 @@ function X01Game({ a }) {
   }, [mode]);
 
   // dart-by-dart input
-  const ev = pending.length ? evaluateDarts(before, pending, s.rules, s.opened[cur]) : null;
+  const ev = pending.length ? evaluateDarts(before, pending, s.rules, s.opened[side]) : null;
   const liveRem = ev && !ev.bust ? before - ev.score : before;
   const addDart = (n) => {
     if (isBot || locked || pending.length >= 3) return;
@@ -193,13 +211,13 @@ function X01Game({ a }) {
     const d = { n, m: n === 0 ? 1 : n === 25 ? Math.min(mult, 2) : mult };
     const np = [...pending, d];
     setPending(np); setMult(1);
-    const e2 = evaluateDarts(before, np, s.rules, s.opened[cur]);
+    const e2 = evaluateDarts(before, np, s.rules, s.opened[side]);
     if (e2.bust || e2.checkout || np.length === 3) lock(() => submit({ darts: np }), e2.bust || e2.checkout ? 600 : 350);
   };
 
   const dartsLeft = mode === 'darts' ? 3 - pending.length : 3;
-  const sub = config.sets ? `${t('game.set')} ${s.set} · ${t('game.leg')} ${s.leg}` : `${t('game.leg')} ${s.leg}`;
-  const many = config.players.length > 2;
+  const sub = (config.sets ? `${t('game.set')} ${s.set} · ${t('game.leg')} ${s.leg}` : `${t('game.leg')} ${s.leg}`) + (isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '');
+  const many = s.n > 2;
 
   return html`<div class="game">
     <${GameTop} a=${a} sub=${sub}>
@@ -208,19 +226,19 @@ function X01Game({ a }) {
     <//>
     <div class="game-body">
       <div class=${'players' + (many ? ' many' : '')}>
-        ${config.players.map((p, i) => {
-          const active = i === cur && !s.finished;
+        ${s.sides.map((_, i) => {
+          const active = i === side && !s.finished;
           const rem = active && mode === 'darts' ? liveRem : s.remaining[i];
           const route = active && set.hints && rem <= 170 ? checkoutRoute(rem, dartsLeft, config.out) : null;
-          const myVisits = s.visits.filter((v) => v.p === i);
+          const myVisits = s.visits.filter((v) => v.s === i);
           const lastV = myVisits.at(-1);
-          return html`<div class=${'pcard' + (active ? ' active' : '')} key=${p.id}>
+          return html`<div class=${'pcard' + (active ? ' active' : '')} key=${'side' + i}>
             <span class="turn-dot"></span>
-            <div class="pname"><${Avatar} p=${p} spin=${active && p.bot} /><span class="title-m grow">${p.name}</span>
+            <div class="pname"><${SideHead} config=${config} side=${i} s=${s} activeSide=${active} />
               <div class="legs">${config.sets && html`<span class="pip" title=${t('setup.sets')}>${s.setsWon[i]}</span>`}<span class="pip" title=${t('setup.legs')}>${s.legsWon[i]}</span></div>
             </div>
             <div class="rem" key=${rem}><span class="bump" style="display:inline-block">${rem}</span></div>
-            <div class="sub"><span>⌀ ${fmt1(mstats[i].avg)}</span><span>${t('game.dartsN', { n: X01.legDarts(s, i) })}</span>${lastV && html`<span>${t('game.last')}: ${lastV.bust ? t('game.bust') : lastV.score}</span>`}</div>
+            <div class="sub"><span>⌀ ${fmt1(X01.sideMatchAvg(s, i))}</span><span>${t('game.dartsN', { n: X01.sideDarts(s, i) })}</span>${lastV && html`<span>${t('game.last')}: ${lastV.bust ? t('game.bust') : lastV.score}</span>`}</div>
             ${route ? html`<div class="hint">${route.map((d) => html`<b>${dartLabel(d)}</b>`)}</div>` : !many && html`<div class="visits">${myVisits.slice(-6).map((v) => html`<span class=${v.bust ? 'bust' : v.score >= 100 ? 'hi' : ''}>${v.bust ? '✕' : v.score}</span>`)}</div>`}
           </div>`;
         })}
@@ -260,6 +278,7 @@ function Mark({ n }) {
     <path d="M7 21 L21 7" />${n >= 2 && html`<path d="M7 7 L21 21" />`}${n >= 3 && html`<circle cx="14" cy="14" r="11" />`}
   </svg>`;
 }
+const keyLabel = (x) => (x === 25 ? 'B' : x === 'D' ? 'D' : x === 'T' ? 'T' : x);
 
 function CricketGame({ a }) {
   const { config } = a;
@@ -268,7 +287,7 @@ function CricketGame({ a }) {
   const [mult, setMult] = useState(1);
   const [locked, lock] = useLock();
   const view = useMemo(() => (pending.length ? CR.preview(config, a.actions, pending) : s), [s, pending]);
-  const cur = s.current, pl = config.players[cur];
+  const cur = s.current, side = s.side, pl = config.players[cur];
   const isBot = !!pl.bot;
   useBot(a, s, () => CR.botAction(s, config, a.actions));
   useEffect(() => { setPending([]); setMult(1); }, [a.actions.length]);
@@ -284,35 +303,42 @@ function CricketGame({ a }) {
     if (pv.legOver || np.length === 3) lock(() => submit(np), pv.legOver ? 600 : 350);
   };
   const label = (d) => (d.n === 0 ? '–' : d.n === 25 ? (d.m === 2 ? 'DB' : 'B') : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : '') + d.n);
-  const n = config.players.length;
-  const dead = (x) => view.marks.every((m) => m[x] >= 3);
+  const n = s.n;
+  const targets = s.targets;
+  const dead = (x) => (s.seq ? view.marks[side][x] >= 3 : x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
   const cols = `52px repeat(${n}, minmax(0,1fr))`;
+  const compact = targets.length > 8;
+  const padNums = (config.mode || 'cricket') === 'cricket' ? [20, 19, 18, 17, 16, 15] : Array.from({ length: 20 }, (_, i) => i + 1);
+  const hasBull = targets.includes(25);
+  const throwing = isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '';
 
   return html`<div class="game">
-    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg} · ${t('game.round')} ${Math.floor(s.visits.length / n) + 1}${config.rounds ? '/' + config.rounds : ''}`} />
+    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg} · ${t('game.round')} ${Math.floor(s.visits.length / n) + 1}${config.rounds ? '/' + config.rounds : ''}${throwing}`} />
     <div class="game-body">
-      <div class="cricket">
+      <div class=${'cricket' + (compact ? ' compact' : '')}>
         <div class="crow" style=${`grid-template-columns:${cols}`}>
           <div></div>
-          ${config.players.map((p, i) => html`<div class=${'cell head' + (i === cur ? ' activecol' : '')}>
-            <${Avatar} p=${p} spin=${i === cur && p.bot} /><span class="nm">${p.name}</span><span class="pts">${view.points[i]}</span>
+          ${s.sides.map((members, i) => html`<div class=${'cell head' + (i === side ? ' activecol' : '')}>
+            ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi) => html`<${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} />`)}</div>`
+              : html`<${Avatar} p=${config.players[members[0]]} spin=${i === side && config.players[members[0]].bot} />`}
+            <span class="nm">${sideName(config, i)}</span><span class="pts">${s.seq ? `${targets.filter((x) => view.marks[i][x] >= 3).length}/${targets.length}` : view.points[i]}</span>
             ${config.legsToWin > 1 && html`<span class="badge">${s.legsWon[i]}</span>`}
           </div>`)}
         </div>
-        ${CR.NUMBERS.map((x) => html`<div class="crow" style=${`grid-template-columns:${cols}`}>
-          <div class=${'cell num' + (dead(x) ? ' dead' : '')}>${x === 25 ? 'B' : x}</div>
-          ${config.players.map((_, i) => html`<div class=${'cell' + (i === cur ? ' activecol' : '')}><${Mark} n=${view.marks[i][x]} /></div>`)}
+        ${targets.map((x) => html`<div class="crow" style=${`grid-template-columns:${cols}`}>
+          <div class=${'cell num' + (dead(x) ? ' dead' : '') + (s.seq && x === CR.nextTarget(view, side) ? ' next' : '')}>${keyLabel(x)}</div>
+          ${s.sides.map((_, i) => html`<div class=${'cell' + (i === side ? ' activecol' : '')}><${Mark} n=${view.marks[i][x]} /></div>`)}
         </div>`)}
       </div>
       <div class="input-panel">
         ${isBot ? html`<div class="entry" style="justify-content:center;gap:12px"><${Avatar} p=${pl} spin /><span class="title-m">${t('game.botThinking', { name: pl.name })}</span></div>` : html`
         <${DartSlots} darts=${pending} labels=${label} />
         <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
-        <div class=${'dartpad m' + mult} style="grid-template-columns:repeat(4,1fr)">
-          ${[20, 19, 18, 17, 16, 15].map((x) => html`<button class=${'n' + (dead(x) ? ' closed' : '')} onClick=${() => addDart(x)}>${x}</button>`)}
-          <button class=${'n' + (dead(25) ? ' closed' : '')} onClick=${() => addDart(25)} disabled=${mult === 3}>${mult === 2 ? 'Bull' : '25'}</button>
+        <div class=${'dartpad m' + mult} style=${padNums.length > 6 ? '' : 'grid-template-columns:repeat(4,1fr)'}>
+          ${padNums.map((x) => html`<button class=${'n' + (dead(x) ? ' closed' : '')} onClick=${() => addDart(x)}>${x}</button>`)}
+          ${hasBull && html`<button class=${'n' + (dead(25) ? ' closed' : '')} onClick=${() => addDart(25)} disabled=${mult === 3}>${mult === 2 ? 'Bull' : '25'}</button>`}
           <button onClick=${() => addDart(0)}>${t('game.miss')}</button>
-          <button class="wide alt" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
+          <button class=${'alt' + (hasBull ? '' : ' wide')} onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
           <button class="wide go" onClick=${() => lock(() => submit([...pending, ...Array(3 - pending.length).fill({ n: 0, m: 1 })]), 10)}><${Icon} n="check" /> ${pending.length < 3 ? t('game.restMiss') : ''}</button>
         </div>`}
       </div>
@@ -419,6 +445,97 @@ function CheckoutGame({ a }) {
           ${[1, 2, 3].map((d) => html`<button class="key ok" onClick=${() => res(true, d)} disabled=${route.length > d}>${d} <span class="label-l" style="margin-left:4px">${t('stats.dartsShort')}</span></button>`)}
         </div>
         <button class="key alt" onClick=${() => res(false, 3)}><span class="row"><${Icon} n="close" /> ${t('game.missed')}</span></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ====================== 121 Checkout ======================
+function C121Game({ a }) {
+  const { config } = a;
+  const s = useMemo(() => C121.compute(config, a.actions), [a.actions]);
+  const [locked, lock] = useLock();
+  const route = checkoutRoute(Math.min(s.target, 170), 3, 'double') || [];
+  const res = (ok, darts) => { if (locked) return; haptic(ok ? 25 : 8); lock(() => afterPush(a, pushAction({ ok, darts })), 120); };
+  return html`<div class="game">
+    <${GameTop} a=${a} sub=${`${Math.min(s.results.length + 1, config.rounds)}/${config.rounds} · ${t('stats.best')} ${s.best || '–'}`} />
+    <div class="game-body">
+      <div class="stack">
+        <div class="big-target"><${Shape} name="burst" cls="deco" /><div class="label-l">${t('game.nineDarts')}</div><div class="v">${s.target}</div>
+          <div class="row" style="justify-content:center;gap:6px">${s.target <= 170 && route.map((d) => html`<span class="badge" style="height:28px;font-size:14px;padding:0 12px">${dartLabel(d)}</span>`)}</div></div>
+        <div class="card"><${Wavy} value=${s.results.length} max=${config.rounds} />
+          <div class="row wrap" style="gap:6px;margin-top:12px">${s.results.map((r) => html`<span class=${'badge' + (r.ok ? ' win' : '')}>${r.target}</span>`)}</div></div>
+      </div>
+      <div class="input-panel">
+        <div class="label-l muted" style="text-align:center">${t('game.finishedVisit')}</div>
+        <div class="keypad">
+          ${[1, 2, 3].map((v) => html`<button class="key ok" onClick=${() => res(true, v * 3)}>${t('game.visitN', { n: v })}</button>`)}
+        </div>
+        <button class="key alt" onClick=${() => res(false, 9)}><span class="row"><${Icon} n="close" /> ${t('game.missed')}</span></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ====================== Doubles training ======================
+function DoublesGame({ a }) {
+  const { config } = a;
+  const s = useMemo(() => DBL.compute(config, a.actions), [a.actions]);
+  const [locked, lock] = useLock();
+  const cur = s.current;
+  const tgt = s.targets[Math.min(s.round[cur], s.targets.length - 1)];
+  const go2 = (h) => { if (locked) return; haptic(h ? 20 : 8); lock(() => afterPush(a, pushAction({ hits: h })), 120); };
+  return html`<div class="game">
+    <${GameTop} a=${a} sub=${`${Math.min(s.round[cur] + 1, 21)}/21`} />
+    <div class="game-body">
+      <div class="stack">
+        <div class="big-target"><${Shape} name="clover" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('stats.hits')} ${s.hits[cur]}</div><div class="v">${tgt === 25 ? 'Bull' : 'D' + tgt}</div></div>
+        <${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.round[i]} max=${21} right=${(i) => s.hits[i]} />
+      </div>
+      <div class="input-panel">
+        <div class="label-l muted" style="text-align:center">${t('game.hitsQ')}</div>
+        <div class="keypad" style="grid-template-columns:repeat(4,1fr)">
+          ${[0, 1, 2, 3].map((h) => html`<button class=${'key' + (h ? ' ok' : ' alt')} style="height:88px;font-size:36px" onClick=${() => go2(h)}>${h}</button>`)}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ====================== Shanghai ======================
+function ShanghaiGame({ a }) {
+  const { config } = a;
+  const s = useMemo(() => SHA.compute(config, a.actions), [a.actions]);
+  const [pending, setPending] = useState([]);
+  const [locked, lock] = useLock();
+  useEffect(() => setPending([]), [a.actions.length]);
+  const cur = s.current;
+  const tgt = Math.min(s.round[cur] + 1, s.rounds);
+  const add = (m) => {
+    if (locked || pending.length >= 3) return;
+    haptic(m ? 15 : 8);
+    const np = [...pending, { m }];
+    setPending(np);
+    if (np.length === 3) lock(() => afterPush(a, pushAction({ darts: np })), 400);
+  };
+  const lab = (d) => (d.m === 0 ? '–' : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : 'S') + tgt);
+  const live = pending.reduce((x, d) => x + d.m * tgt, 0);
+  return html`<div class="game">
+    <${GameTop} a=${a} sub=${`${t('game.round')} ${tgt}/${s.rounds}`} />
+    <div class="game-body">
+      <div class="stack">
+        <div class="big-target"><${Shape} name="sunny" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('stats.score')} ${s.score[cur] + live}</div><div class="v">${tgt}</div><div class="body-m">${t('game.shanghaiHint')}</div></div>
+        <${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.round[i]} max=${s.rounds} right=${(i) => s.score[i]} />
+      </div>
+      <div class="input-panel">
+        <${DartSlots} darts=${pending} labels=${lab} />
+        <div class="keypad" style="grid-template-columns:repeat(4,1fr)">
+          <button class="key alt" onClick=${() => add(0)}>${t('game.miss')}</button>
+          <button class="key" onClick=${() => add(1)}>S${tgt}</button>
+          <button class="key" style="background:var(--secondary-container);color:var(--on-secondary-container)" onClick=${() => add(2)}>D${tgt}</button>
+          <button class="key" style="background:var(--tertiary-container);color:var(--on-tertiary-container)" onClick=${() => add(3)}>T${tgt}</button>
+        </div>
+        <button class="key alt" style="height:48px" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
       </div>
     </div>
   </div>`;

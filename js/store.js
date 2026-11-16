@@ -5,7 +5,7 @@ import { uid } from './darts.js';
 const KEY = 'ninedarter:v1';
 
 const defaults = () => ({
-  version: 1,
+  version: 2,
   settings: {
     theme: 'system', hue: 285,
     lang: (navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en',
@@ -33,6 +33,8 @@ function load() {
 }
 
 let state = load();
+// v1.0.2: start with an empty offline player list (older builds left stale local players behind)
+if ((state.version || 1) < 2) { state = { ...state, version: 2, players: [], lastSetup: {} }; }
 try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
 
 /** The local user as a game participant. */
