@@ -1,23 +1,31 @@
-// Cricket engine: Cricket / Tactics / Fullboard, optional penalty (cut-throat) scoring, solo or teams.
-// Targets: numbers, 25 (bull/house), 'D' (any double) and 'T' (any treble).
+// Cricket engine: Cricket / Tactics / Fullboard / Akyaka with selectable scoring, solo or teams.
+// Targets: numbers, 25 (bull), 'D' (double bed), 'T' (treble bed), 'H' (house = bullseye area).
 import { botCricketVisit } from '../bot.js';
 import { sidesOf } from '../teams.js';
 
 const range = (a, b) => Array.from({ length: a - b + 1 }, (_, i) => a - i);
 export const VARIANTS = {
   cricket: [...range(20, 15), 25],
-  tactics: [...range(20, 1), 'D', 'T', 25],
-  fullboard: [...range(20, 10), 25, 'D', 'T', 'H'], // H = house (inner bull)
+  tactics: range(20, 10), // numbers only; a double adds 2 marks, a treble 3
+  fullboard: [...range(20, 10), 'D', 'T', 'H'], // a double/treble on an active number is either number marks or 1 bed mark (player's choice); H: outer bull 1, inner bull 2
   akyaka: [...range(20, 15), 25], // sequential: only the next unclosed target counts, no points
 };
 export const NUMBERS = VARIANTS.cricket;
 
-/* config = { mode: 'cricket'|'tactics'|'fullboard', cutthroat: bool, legsToWin, rounds (0 = unlimited), players, teams? } */
+/* config = { mode: 'cricket'|'tactics'|'fullboard'|'akyaka', scoring: 'points'|'penalty'|'double'|'none', no1011, legsToWin, rounds (0 = unlimited), players, teams? }
+   scoring: points = extra hits score for yourself (highest wins) · penalty = extra hits are penalty points for open opponents (lowest wins)
+            double = penalty ×2 · none = no scoring, first to close everything wins */
 export const targetsOf = (config) => {
   const t = VARIANTS[config.mode || 'cricket'];
-  return config.mode === 'fullboard' && config.no1011 ? t.filter((x) => x !== 10 && x !== 11) : t;
+  return (config.mode === 'fullboard' || config.mode === 'tactics') && config.no1011 ? t.filter((x) => x !== 10 && x !== 11) : t;
 };
-const isCut = (config) => config.mode !== 'akyaka' && (!!config.cutthroat || config.variant === 'cutthroat');
+export const scoringOf = (config) => {
+  if (config.mode === 'akyaka') return 'none';
+  if (config.scoring) return config.scoring;
+  return config.cutthroat || config.variant === 'cutthroat' ? 'penalty' : 'points';
+};
+/** Fullboard: does a double/treble on number n need the number-or-bed choice? */
+export const needsBedChoice = (s, d) => s.mode === 'fullboard' && d.m >= 2 && d.n !== 25 && d.n > 0 && d.n in s.marks[0];
 /** Akyaka: the next target this side still has to close (in order). */
 export const nextTarget = (s, side) => s.targets.find((x) => s.marks[side][x] < 3);
 
@@ -30,7 +38,8 @@ function newLeg(s) {
 export function compute(config, actions) {
   const sides = sidesOf(config);
   const n = sides.length;
-  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', targets: targetsOf(config), numbers: targetsOf(config), cut: isCut(config), legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: 0, side: 0, current: sides[0][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false };
+  const scoring = scoringOf(config);
+  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', scoring, targets: targetsOf(config), numbers: targetsOf(config), cut: scoring === 'penalty' || scoring === 'double', mult: scoring === 'double' ? 2 : 1, legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: 0, side: 0, current: sides[0][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false };
   newLeg(s);
   for (const a of actions) applyVisit(s, config, a);
   return s;
@@ -41,6 +50,7 @@ const closedAll = (s, side) => s.targets.every((x) => s.marks[side][x] >= 3);
 function legWinner(s) {
   for (let side = 0; side < s.n; side++) {
     if (!closedAll(s, side)) continue;
+    if (s.scoring === 'none') return side;
     const others = s.points.filter((_, i) => i !== side);
     if (s.cut ? others.every((o) => s.points[side] <= o) : others.every((o) => s.points[side] >= o)) return side;
   }
@@ -62,12 +72,12 @@ function mark(s, side, key, hits, val) {
   const extra = hits - closeHits;
   s.marks[side][key] = Math.min(3, cur + hits);
   let counted = closeHits;
-  if (extra > 0) {
+  if (extra > 0 && s.scoring !== 'none') {
     const open = [];
     for (let o = 0; o < s.n; o++) if (o !== side && s.marks[o][key] < 3) open.push(o);
     if (open.length) {
       counted += extra;
-      if (s.cut) for (const o of open) s.points[o] += extra * val;
+      if (s.cut) for (const o of open) s.points[o] += extra * val * s.mult;
       else s.points[side] += extra * val;
     }
   }
@@ -76,6 +86,13 @@ function mark(s, side, key, hits, val) {
 
 function applyDart(s, side, d) {
   if (!d.n) return 0;
+  if (s.mode === 'fullboard') {
+    if (d.n === 25) return mark(s, side, 'H', d.m, 25); // outer bull 1 mark, inner bull 2 marks
+    const active = d.n in s.marks[side];
+    if (d.m >= 2 && (d.bed || !active)) return mark(s, side, d.m === 2 ? 'D' : 'T', 1, d.n * d.m);
+    return mark(s, side, d.n, d.m, d.n);
+  }
+  if (s.mode === 'tactics') return mark(s, side, d.n, d.m, d.n);
   let c = mark(s, side, d.n, d.m, d.n === 25 ? 25 : d.n);
   if (d.n !== 25 && d.m === 2) c += mark(s, side, 'D', 1, d.n * 2);
   if (d.n !== 25 && d.m === 3) c += mark(s, side, 'T', 1, d.n * 3);
@@ -100,7 +117,8 @@ function applyVisit(s, config, a) {
     const roundsDone = Math.floor(s.visits.length / s.n);
     if (s.visits.length % s.n === 0 && roundsDone >= config.rounds) {
       const progress = (i) => s.targets.reduce((a, x) => a + s.marks[i][x], 0);
-      const sorted = s.points.map((pt, i) => [s.seq ? progress(i) : pt, i]).sort((x, y) => (s.cut ? x[0] - y[0] : y[0] - x[0]));
+      const byProgress = s.seq || s.scoring === 'none';
+      const sorted = s.points.map((pt, i) => [byProgress ? progress(i) : pt, i]).sort((x, y) => (s.cut && !byProgress ? x[0] - y[0] : y[0] - x[0]));
       w = sorted[0][1];
     }
   }

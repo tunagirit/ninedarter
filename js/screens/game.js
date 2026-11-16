@@ -280,6 +280,19 @@ function Mark({ n }) {
 }
 const keyLabel = (x) => (x === 25 ? 'B' : x);
 
+/** Fullboard double/treble choice: number marks or one mark on the Double/Triple bed. */
+function bedChoiceDialog(d) {
+  const bedName = t(d.m === 2 ? 'game.double' : 'game.treble');
+  return openDialog((close) => html`<div class="icon-head"><${Icon} n="call_split" size=${32} /></div>
+    <div class="headline-s" style="text-align:center">${(d.m === 3 ? 'T' : 'D') + d.n}</div>
+    <div class="body-m muted" style="text-align:center">${t('fb.choiceQ', { n: d.n, m: d.m, bed: bedName })}</div>
+    <div class="bed-choice">
+      <button class="key ok" onClick=${() => close('num')}><span class="big">${d.n}</span><span>${t('fb.toNumber', { m: d.m })}</span></button>
+      <button class="key alt" onClick=${() => close('bed')}><span class="big">${d.m === 3 ? 'T' : 'D'}</span><span>${t('fb.toBed', { bed: bedName })}</span></button>
+    </div>
+    <div class="actions"><${Btn} kind="text" onClick=${() => close(null)}>${t('common.cancel')}<//></div>`);
+}
+
 function CricketGame({ a }) {
   const { config } = a;
   const s = useMemo(() => CR.compute(config, a.actions), [a.actions]);
@@ -293,23 +306,34 @@ function CricketGame({ a }) {
   useEffect(() => { setPending([]); setMult(1); }, [a.actions.length]);
   const submit = (darts) => afterPush(a, pushAction({ darts }));
 
-  const addDart = (n) => {
-    if (isBot || locked || pending.length >= 3) return;
+  const [asking, setAsking] = useState(false);
+  const addDart = async (n) => {
+    if (isBot || locked || asking || pending.length >= 3) return;
     haptic(8);
     const d = { n, m: n === 0 ? 1 : n === 25 ? Math.min(mult, 2) : mult };
+    setMult(1);
+    if (CR.needsBedChoice(s, d)) {
+      // Fullboard: ask whether the double/treble counts as number marks or one bed mark
+      setAsking(true);
+      const choice = await bedChoiceDialog(d);
+      setAsking(false);
+      if (choice == null) return;
+      if (choice === 'bed') d.bed = true;
+    }
     const np = [...pending, d];
-    setPending(np); setMult(1);
+    setPending(np);
     const pv = CR.preview(config, a.actions, np);
     if (pv.legOver || np.length === 3) lock(() => submit(np), pv.legOver ? 600 : 350);
   };
-  const label = (d) => (d.n === 0 ? '–' : d.n === 25 ? (d.m === 2 ? 'DB' : 'B') : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : '') + d.n);
+  const label = (d) => (d.n === 0 ? '–' : d.n === 25 ? (d.m === 2 ? 'DB' : 'B') : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : '') + d.n + (d.bed ? '→' + (d.m === 3 ? 'T' : 'D') : ''));
   const n = s.n;
   const targets = s.targets;
   const dead = (x) => (s.seq ? view.marks[side][x] >= 3 : x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
+  const inactive = (x) => s.mode === 'fullboard' && !(x in view.marks[0]);
   const cols = `52px repeat(${n}, minmax(0,1fr))`;
   const compact = targets.length > 8;
-  const padNums = targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
-  const hasBull = targets.includes(25);
+  const padNums = s.mode === 'fullboard' ? Array.from({ length: 20 }, (_, i) => i + 1) : targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
+  const hasBull = targets.includes(25) || targets.includes('H');
   const throwing = isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '';
 
   return html`<div class="game">
@@ -335,8 +359,8 @@ function CricketGame({ a }) {
         <${DartSlots} darts=${pending} labels=${label} />
         <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
         <div class=${'dartpad m' + mult} style=${padNums.length > 6 ? '' : 'grid-template-columns:repeat(4,1fr)'}>
-          ${padNums.map((x) => html`<button class=${'n' + (dead(x) ? ' closed' : '')} onClick=${() => addDart(x)}>${x}</button>`)}
-          ${hasBull && html`<button class=${'n' + (dead(25) ? ' closed' : '')} onClick=${() => addDart(25)} disabled=${mult === 3}>${mult === 2 ? 'Bull' : '25'}</button>`}
+          ${padNums.map((x) => html`<button class=${'n' + (dead(x) ? ' closed' : '') + (inactive(x) ? ' bedonly' : '')} onClick=${() => addDart(x)}>${x}</button>`)}
+          ${hasBull && html`<button class=${'n' + (dead(25) || dead('H') ? ' closed' : '')} onClick=${() => addDart(25)} disabled=${mult === 3}>${mult === 2 ? 'Bull' : '25'}</button>`}
           <button onClick=${() => addDart(0)}>${t('game.miss')}</button>
           <button class=${'alt' + (hasBull ? '' : ' wide')} onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
           <button class="wide go" onClick=${() => lock(() => submit([...pending, ...Array(3 - pending.length).fill({ n: 0, m: 1 })]), 10)}><${Icon} n="check" /> ${pending.length < 3 ? t('game.restMiss') : ''}</button>

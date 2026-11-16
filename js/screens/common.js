@@ -8,7 +8,7 @@ export function modeName(type, c) {
     const fmt = c.sets ? `${t('setup.firstTo')} ${c.setsToWin} ${t('setup.sets')}` : `${t('setup.firstTo')} ${c.legsToWin} ${t(c.legsToWin === 1 ? 'setup.leg' : 'setup.legs')}`;
     return `${c.start} · ${fmt}${c.teams ? ' · ' + t('setup.teams') : ''}`;
   }
-  if (type === 'cricket') return `${t('cricket.' + (c.mode || 'cricket'))}${c.no1011 ? ' · ' + t('setup.no1011Short') : ''}${c.cutthroat || c.variant === 'cutthroat' ? ' · ' + t('setup.penalty') : ''}${c.teams ? ' · ' + t('setup.teams') : ''}`;
+  if (type === 'cricket') return `${t('cricket.' + (c.mode || 'cricket'))}${c.no1011 ? ' · ' + t('setup.no1011Short') : ''}${c.scoring && c.scoring !== 'points' && c.mode !== 'akyaka' ? ' · ' + t('scoring.' + c.scoring) : !c.scoring && (c.cutthroat || c.variant === 'cutthroat') ? ' · ' + t('scoring.penalty') : ''}${c.teams ? ' · ' + t('setup.teams') : ''}`;
   if (type === 'atc') return `${t('mode.atc')}${c.mode !== 'any' ? ' · ' + t('setup.atc.' + c.mode) : ''}`;
   if (type === 'checkout') return `${t('mode.checkout')} · ${c.min}–${c.max}`;
   return t('mode.' + type);

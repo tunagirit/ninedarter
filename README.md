@@ -23,10 +23,10 @@
   - Giriş: Straight / Double / Master in · Çıkış: Double / Straight / Master out
   - “İlk N” veya “En iyi N” formatı, **leg** ya da **set** modu
   - 8 oyuncuya kadar veya **takım modu** (2–4 takım), leg/set başlangıcı otomatik döner
-- **Cricket** — dört oyun türü, **cezalı mod** (cut-throat) açılıp kapatılabilir, takım modu, tur limiti, çoklu leg
+- **Cricket** — dört oyun türü; puanlama: **Standart ceza**, **Katlamalı ceza** (×2), **Klasik puan** veya **Cezasız**; takım modu, tur limiti, çoklu leg
   - **Cricket:** 20–15 ve Bull
-  - **Fullboard:** 20–10, Bull, Double, Triple ve House (iç bull); 10 ve 11 isteğe bağlı olarak çıkarılabilir
-  - **Tactics:** Fullboard + Double, Triple ve Bull (house)
+  - **Fullboard:** 20–10 + Double, Triple ve House; aktif bir sayının double/triple'ında sayıya mı (2/3 çentik) Double/Triple hanesine mi (1 çentik) yazılacağı sorulur; House: dış bull 1, iç bull 2 çentik; 10–11 çıkarılabilir
+  - **Tactics:** yalnızca 20–10 (double 2, triple 3 çentik); 10–11 çıkarılabilir
   - **Akyaka:** sıralı Cricket — önce 20, sonra 19 … 15, en son toplam 3 Bull; sıradaki hedef kapanmadan diğerleri işlemez
 - **Antrenman**
   - **121 Checkout** — 9 dartta bitir, hedef yükselsin
