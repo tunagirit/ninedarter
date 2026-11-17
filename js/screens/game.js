@@ -358,7 +358,7 @@ function CricketGame({ a }) {
         ${isBot ? html`<div class="entry" style="justify-content:center;gap:12px"><${Avatar} p=${pl} spin /><span class="title-m">${t('game.botThinking', { name: pl.name })}</span></div>` : html`
         <${DartSlots} darts=${pending} labels=${label} />
         <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
-        <div class=${'dartpad m' + mult} style=${padNums.length > 6 ? '' : 'grid-template-columns:repeat(4,1fr)'}>
+        <div class=${'dartpad m' + mult + (padNums.length > 6 ? '' : ' cols4')}>
           ${padNums.map((x) => html`<button class=${'n' + (dead(x) ? ' closed' : '') + (inactive(x) ? ' bedonly' : '')} onClick=${() => addDart(x)}>${x}</button>`)}
           ${hasBull && html`<button class=${'n' + (dead(25) || dead('H') ? ' closed' : '')} onClick=${() => addDart(25)} disabled=${mult === 3}>${mult === 2 ? 'Bull' : '25'}</button>`}
           <button onClick=${() => addDart(0)}>${t('game.miss')}</button>
@@ -403,7 +403,7 @@ function AtcGame({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${t('game.dartsN', { n: s.darts[cur] + pending.length })} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="sunny" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('game.target')}</div><div class="v">${targetLabel(tgt, config.mode)}</div></div>
         ${config.players.length > 1 && html`<${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.pos[i]} max=${s.targets.length} right=${(i) => targetLabel(s.targets[Math.min(s.pos[i], s.targets.length - 1)], config.mode)} />`}
         ${config.players.length === 1 && html`<div class="card"><${Wavy} value=${pos} max=${s.targets.length} /><div class="row between body-m muted" style="margin-top:8px"><span>${pos}/${s.targets.length}</span><span>${t('stats.hitPct')}: ${s.darts[cur] ? Math.round((s.hits[cur] / s.darts[cur]) * 100) : 0}%</span></div></div>`}
@@ -411,8 +411,8 @@ function AtcGame({ a }) {
       <div class="input-panel">
         <${DartSlots} darts=${pending} labels=${(h) => html`<${Icon} n=${h ? 'check' : 'close'} />`} />
         <div class="hit-row">
-          <button class="key" style="height:96px;font-size:22px" onClick=${() => add(false)}><span class="row"><${Icon} n="close" /> ${t('game.miss')}</span></button>
-          <button class="key ok" style="height:96px;font-size:22px" onClick=${() => add(true)}><span class="row"><${Icon} n="check" /> ${t('game.hit')}</span></button>
+          <button class="key big" onClick=${() => add(false)}><span class="row"><${Icon} n="close" /> ${t('game.miss')}</span></button>
+          <button class="key ok big" onClick=${() => add(true)}><span class="row"><${Icon} n="check" /> ${t('game.hit')}</span></button>
         </div>
       </div>
     </div>
@@ -431,14 +431,14 @@ function BobsGame({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${`${t('game.round')} ${Math.min(s.round[cur] + 1, 21)}/21`} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="flower" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('stats.score')} ${s.score[cur]}</div><div class="v">${lab}</div><div class="body-m">±${tgt === 25 ? 50 : tgt * 2}</div></div>
         <${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.round[i]} max=${21} right=${(i) => (s.out[i] ? '✕ ' : '') + s.score[i]} />
       </div>
       <div class="input-panel">
         <div class="label-l muted" style="text-align:center">${t('game.hitsQ')}</div>
-        <div class="keypad" style="grid-template-columns:repeat(4,1fr)">
-          ${[0, 1, 2, 3].map((h) => html`<button class=${'key' + (h ? ' ok' : ' alt')} style="height:88px;font-size:36px" onClick=${() => go2(h)}>${h}</button>`)}
+        <div class="keypad row1 cols4">
+          ${[0, 1, 2, 3].map((h) => html`<button class=${'key big' + (h ? ' ok' : ' alt')} onClick=${() => go2(h)}>${h}</button>`)}
         </div>
       </div>
     </div>
@@ -457,7 +457,7 @@ function CheckoutGame({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${`${Math.min(s.idx + 1, s.seq.length)}/${s.seq.length} · ✓ ${hits}`} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="burst" cls="deco" /><div class="label-l">${t('game.checkoutThis')}</div><div class="v">${tgt}</div>
           <div class="row" style="justify-content:center;gap:6px">${route.map((d) => html`<span class="badge" style="height:28px;font-size:14px;padding:0 12px">${dartLabel(d)}</span>`)}</div></div>
         <div class="card"><${Wavy} value=${s.idx} max=${s.seq.length} />
@@ -465,7 +465,7 @@ function CheckoutGame({ a }) {
       </div>
       <div class="input-panel">
         <div class="label-l muted" style="text-align:center">${t('game.finishedWith')}</div>
-        <div class="keypad">
+        <div class="keypad row1">
           ${[1, 2, 3].map((d) => html`<button class="key ok" onClick=${() => res(true, d)} disabled=${route.length > d}>${d} <span class="label-l" style="margin-left:4px">${t('stats.dartsShort')}</span></button>`)}
         </div>
         <button class="key alt" onClick=${() => res(false, 3)}><span class="row"><${Icon} n="close" /> ${t('game.missed')}</span></button>
@@ -484,7 +484,7 @@ function C121Game({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${`${Math.min(s.results.length + 1, config.rounds)}/${config.rounds} · ${t('stats.best')} ${s.best || '–'}`} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="burst" cls="deco" /><div class="label-l">${t('game.nineDarts')}</div><div class="v">${s.target}</div>
           <div class="row" style="justify-content:center;gap:6px">${s.target <= 170 && route.map((d) => html`<span class="badge" style="height:28px;font-size:14px;padding:0 12px">${dartLabel(d)}</span>`)}</div></div>
         <div class="card"><${Wavy} value=${s.results.length} max=${config.rounds} />
@@ -492,7 +492,7 @@ function C121Game({ a }) {
       </div>
       <div class="input-panel">
         <div class="label-l muted" style="text-align:center">${t('game.finishedVisit')}</div>
-        <div class="keypad">
+        <div class="keypad row1">
           ${[1, 2, 3].map((v) => html`<button class="key ok" onClick=${() => res(true, v * 3)}>${t('game.visitN', { n: v })}</button>`)}
         </div>
         <button class="key alt" onClick=${() => res(false, 9)}><span class="row"><${Icon} n="close" /> ${t('game.missed')}</span></button>
@@ -512,14 +512,14 @@ function DoublesGame({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${`${Math.min(s.round[cur] + 1, 21)}/21`} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="clover" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('stats.hits')} ${s.hits[cur]}</div><div class="v">${tgt === 25 ? 'Bull' : 'D' + tgt}</div></div>
         <${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.round[i]} max=${21} right=${(i) => s.hits[i]} />
       </div>
       <div class="input-panel">
         <div class="label-l muted" style="text-align:center">${t('game.hitsQ')}</div>
-        <div class="keypad" style="grid-template-columns:repeat(4,1fr)">
-          ${[0, 1, 2, 3].map((h) => html`<button class=${'key' + (h ? ' ok' : ' alt')} style="height:88px;font-size:36px" onClick=${() => go2(h)}>${h}</button>`)}
+        <div class="keypad row1 cols4">
+          ${[0, 1, 2, 3].map((h) => html`<button class=${'key big' + (h ? ' ok' : ' alt')} onClick=${() => go2(h)}>${h}</button>`)}
         </div>
       </div>
     </div>
@@ -547,19 +547,19 @@ function ShanghaiGame({ a }) {
   return html`<div class="game">
     <${GameTop} a=${a} sub=${`${t('game.round')} ${tgt}/${s.rounds}`} />
     <div class="game-body">
-      <div class="stack">
+      <div class="stack train-side">
         <div class="big-target"><${Shape} name="sunny" cls="deco" /><div class="label-l">${config.players[cur].name} · ${t('stats.score')} ${s.score[cur] + live}</div><div class="v">${tgt}</div><div class="body-m">${t('game.shanghaiHint')}</div></div>
         <${PlayersProgress} players=${config.players} cur=${cur} value=${(i) => s.round[i]} max=${s.rounds} right=${(i) => s.score[i]} />
       </div>
       <div class="input-panel">
         <${DartSlots} darts=${pending} labels=${lab} />
-        <div class="keypad" style="grid-template-columns:repeat(4,1fr)">
+        <div class="keypad row1 cols4">
           <button class="key alt" onClick=${() => add(0)}>${t('game.miss')}</button>
           <button class="key" onClick=${() => add(1)}>S${tgt}</button>
           <button class="key" style="background:var(--secondary-container);color:var(--on-secondary-container)" onClick=${() => add(2)}>D${tgt}</button>
           <button class="key" style="background:var(--tertiary-container);color:var(--on-tertiary-container)" onClick=${() => add(3)}>T${tgt}</button>
         </div>
-        <button class="key alt" style="height:48px" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
+        <button class="key alt slim" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
       </div>
     </div>
   </div>`;

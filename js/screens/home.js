@@ -120,7 +120,7 @@ export function Home() {
     </div>
 
     <h2 class="title-m section-title"><${Icon} n="sports_score" size=${20} /> ${t('home.games')}</h2>
-    <div class="grid auto">${GAMES.map((m) => html`<${ModeCard} m=${m} />`)}</div>
+    <div class="grid auto games">${GAMES.map((m) => html`<${ModeCard} m=${m} />`)}</div>
     <h2 class="title-m section-title"><${Icon} n="fitness_center" size=${20} /> ${t('home.practice')}</h2>
     <div class="grid auto practice">${PRACTICE.map((m) => html`<${ModeCard} m=${m} small />`)}</div>
 

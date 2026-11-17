@@ -546,3 +546,188 @@ table.stats td.best { color: var(--primary); font-weight: 800; }
 .bubble .time { align-self: flex-end; font-size: 11px; opacity: 0.7; display: inline-flex; align-items: center; gap: 2px; }
 .chat-input { display: flex; gap: 8px; align-items: flex-end; padding: 8px 0 calc(12px + env(safe-area-inset-bottom)); background: var(--surface); }
 .chat-input textarea { resize: none; height: auto; min-height: 56px; max-height: 140px; padding-top: 16px; border-radius: 28px; }
+/* =====================================================================
+   v1.0.4 — responsive game layout
+   One full-height screen on every device: portrait = scores on top and the
+   input filling the bottom; landscape = scores left, input right.
+   ===================================================================== */
+.shell.fullscreen .main { padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left)); }
+.game { height: 100dvh; min-height: 0; max-width: 1680px; overflow: hidden; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.game-top { flex: none; min-height: 52px; }
+.game-top .info { min-width: 0; }
+.game-top .info .title-m, .game-top .info .body-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-body { flex: 1 1 auto; min-height: 0; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; align-content: stretch; align-items: stretch; padding-bottom: 0; }
+.game-body .input-panel { align-self: stretch; }
+
+/* --- score cards (X01): fill their area, numbers scale with the card --- */
+.players, .players.many { min-height: 0; height: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); align-content: stretch; gap: 8px; overflow: hidden; }
+.players:has(> .pcard:only-child) { grid-template-columns: minmax(0, 1fr); }
+.players > .pcard { container-type: size; min-height: 0; padding: 10px 14px; gap: 4px; }
+.players > .pcard .rem, .players.many > .pcard .rem { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; font-size: clamp(28px, min(30cqw, 42cqh), 210px); line-height: 0.9; }
+.players > .pcard .sub { font-size: clamp(11px, 3.4cqw, 15px); gap: 4px 10px; }
+.players > .pcard .hint b { font-size: clamp(11px, 3.4cqw, 16px); padding: 3px 9px; }
+@container (max-height: 175px) { .pcard .visits { display: none; } }
+@container (max-height: 135px) { .pcard .sub span:nth-child(n+2) { display: none; } .pcard .pname .avatar { width: 30px; height: 30px; font-size: 13px; } }
+@container (max-height: 100px) { .pcard .sub { display: none; } }
+@container (max-width: 180px) { .pcard .pname .title-m { font-size: 14px; } .pcard .legs .pip { min-width: 24px; height: 22px; padding: 0 6px; font-size: 12px; } .pcard .pname { gap: 6px; } }
+
+/* --- input panel --- */
+.input-panel, .game-body .input-panel { margin: 0; border-radius: var(--r-2xl); padding: 10px; gap: 8px; min-height: 0; display: flex; flex-direction: column; }
+.entry { flex: none; min-height: clamp(44px, 7dvh, 64px); }
+.entry .value { font-size: clamp(26px, 5dvh, 40px); }
+.entry .value.placeholder { font-size: clamp(16px, 2.6dvh, 22px); }
+.quick { flex: none; }
+.quick button { height: clamp(30px, 5dvh, 44px); font-size: clamp(12px, 1.9dvh, 15px); }
+.input-panel .keypad:not(.row1), .input-panel .dartpad { flex: none; height: clamp(196px, 42dvh, 470px); grid-auto-rows: minmax(0, 1fr); }
+.input-panel .dartpad.cols4 { height: clamp(150px, 30dvh, 330px); }
+.key, .dartpad button { height: auto; min-height: 0; }
+.key { font-size: clamp(20px, 3.6dvh, 34px); }
+.dartpad button { font-size: clamp(15px, 2.6dvh, 22px); }
+.keypad.row1 { flex: none; height: clamp(64px, 13dvh, 128px); grid-auto-rows: minmax(0, 1fr); }
+.keypad.cols4, .dartpad.cols4 { grid-template-columns: repeat(4, 1fr); }
+.hit-row { flex: none; height: clamp(72px, 16dvh, 150px); }
+.hit-row .key { height: 100%; }
+.key.big { font-size: clamp(22px, 4.6dvh, 42px); }
+.key.slim { flex: none; height: clamp(40px, 6dvh, 52px); }
+.dart-slots { flex: none; }
+.dart-slots .slot { height: clamp(34px, 5.5dvh, 48px); font-size: clamp(14px, 2.2dvh, 18px); }
+.input-panel .bgroup { flex: none; }
+.input-panel .bgroup .seg { --bh: clamp(34px, 5dvh, 44px); }
+.input-panel > .label-l { flex: none; }
+
+/* --- training: target area scrolls, big target grows on tall screens --- */
+.train-side { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.train-side .big-target { flex: 1 0 auto; min-height: 140px; display: flex; flex-direction: column; justify-content: center; padding: clamp(14px, 3dvh, 28px); }
+.big-target .v { font-size: clamp(56px, min(22vw, 15dvh), 180px); }
+
+/* --- cricket board fills its area --- */
+.cricket, .cricket.compact { min-height: 0; height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; grid-template-rows: auto; grid-auto-rows: minmax(26px, 1fr); align-content: stretch; }
+.cricket .cell, .cricket.compact .cell { height: 100%; min-height: 26px; }
+.cricket .head, .cricket.compact .head { height: auto; }
+.cricket .mark { height: min(30px, 72%); width: auto; aspect-ratio: 1; }
+.cricket > .crow:first-child { position: sticky; top: 0; z-index: 1; background: var(--surface); padding-bottom: 2px; }
+.cricket .head .pts { font-size: clamp(20px, 3.6dvh, 34px); }
+
+/* --- landscape: scores left, input right --- */
+@media (orientation: landscape) and (min-width: 560px) {
+  .game-body { grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr); grid-template-rows: minmax(0, 1fr); }
+  .game-body .input-panel { height: 100%; justify-content: center; }
+  .input-panel .keypad:not(.row1), .input-panel .dartpad, .input-panel .dartpad.cols4 { flex: 1 1 auto; height: auto; max-height: 640px; }
+  .keypad.row1, .hit-row { flex: 1 1 auto; height: auto; max-height: 260px; }
+  .players { grid-auto-flow: row; }
+}
+@media (orientation: landscape) and (min-width: 1200px) {
+  .game-body { grid-template-columns: minmax(0, 1fr) minmax(380px, 540px); gap: 16px; padding-bottom: 8px; }
+  .game-body .input-panel { padding: 16px; gap: 10px; }
+}
+/* phones held sideways: everything tighter so the whole keypad fits */
+@media (orientation: landscape) and (max-height: 520px) {
+  .game-top { min-height: 40px; }
+  .game-top .btn.icon-btn { --bh: 36px; }
+  .game-body { gap: 8px; }
+  .game-body .input-panel { padding: 6px; gap: 5px; border-radius: var(--r-xl); }
+  .entry { min-height: 38px; padding-left: 14px; }
+  .entry .value { font-size: 22px; }
+  .entry .value.placeholder { font-size: 15px; }
+  .quick { gap: 4px; }
+  .quick button { height: 28px; font-size: 12px; }
+  .keypad { gap: 5px; }
+  .key { font-size: 20px; border-radius: var(--r-l); }
+  .dartpad { gap: 4px; }
+  .dartpad button { font-size: 14px; border-radius: var(--r-m); }
+  .dart-slots .slot { height: 30px; font-size: 13px; }
+  .input-panel .bgroup .seg { --bh: 30px; font-size: 12px; }
+  .players > .pcard { padding: 8px 12px; }
+  .cricket .head { padding: 3px; gap: 0; }
+  .cricket .head .avatar { width: 26px; height: 26px; font-size: 11px; }
+  .train-side .big-target { min-height: 100px; }
+  .big-target .v { font-size: clamp(44px, 18dvh, 90px); }
+}
+/* very short portrait screens (small phones) */
+@media (orientation: portrait) and (max-height: 640px) {
+  .game-top { min-height: 44px; }
+  .game-body { gap: 6px; }
+  .game-body .input-panel { padding: 8px; gap: 6px; }
+}
+/* bigger numbers, and secondary text that grows with the card */
+.players > .pcard .rem, .players.many > .pcard .rem { font-size: clamp(30px, min(44cqw, 50cqh), 240px); }
+.players > .pcard .sub { font-size: clamp(11px, 3.6cqw, 19px); }
+.players > .pcard .hint b { font-size: clamp(11px, 4cqw, 24px); padding: 0.25em 0.75em; border-radius: 0.8em; }
+.players > .pcard .visits span { font-size: clamp(12px, 3.6cqw, 18px); }
+.players > .pcard .pname .title-m { font-size: clamp(14px, 4.4cqw, 24px); line-height: 1.2; }
+@container (min-width: 300px) and (min-height: 260px) { .pcard .pname .avatar { width: 56px; height: 56px; font-size: 22px; } .pcard .legs .pip { min-width: 38px; height: 32px; font-size: 16px; border-radius: 16px; } }
+.key.ok .label-l { font-size: clamp(13px, 2.2dvh, 20px); }
+@media (min-width: 768px) and (min-height: 700px) {
+  .game-top { min-height: 60px; }
+  .game-top .info .title-m { font-size: 19px; }
+  .game-top .info .body-s { font-size: 14px; }
+  .game-top .btn.icon-btn { --bh: 48px; }
+  .game-top .btn.icon-btn .msr { font-size: 28px; }
+}
+.players > .pcard .pname .title-m { font-size: clamp(14px, 5cqw, 26px); }
+.players > .pcard .sub { font-size: clamp(11px, 4cqw, 20px); }
+.players > .pcard .hint b { font-size: clamp(11px, 4.6cqw, 26px); }
+.dartpad.cols4 button.wide.go { grid-column: span 3; }
+@media (orientation: portrait) and (max-height: 780px) {
+  .cricket .head { padding: 4px 4px 6px; gap: 0; }
+  .cricket .head .avatar { width: 26px; height: 26px; font-size: 11px; }
+  .cricket .head .nm { font-size: 11px; }
+  .cricket .head .pts { font-size: 20px; }
+  .cricket, .cricket.compact { grid-auto-rows: minmax(24px, 1fr); }
+  .cricket .cell, .cricket.compact .cell { min-height: 24px; }
+  .cricket ~ .input-panel .dartpad:not(.cols4) { height: clamp(170px, 34dvh, 420px); }
+}
+.players > .pcard .team-members .tm { font-size: clamp(11px, 3.8cqw, 18px); }
+.players > .pcard .team-members .tm .avatar { width: clamp(22px, 7cqw, 40px); height: clamp(22px, 7cqw, 40px); font-size: clamp(10px, 3cqw, 16px); }
+.players > .pcard .label-l { font-size: clamp(12px, 3.8cqw, 18px); }
+.train-side .big-target .deco { --ds: clamp(200px, 42dvh, 560px); width: var(--ds); height: var(--ds); margin: calc(var(--ds) / -2); }
+.input-panel > .key { flex: none; height: clamp(50px, 9dvh, 92px); }
+@media (orientation: landscape) and (max-height: 520px) { .input-panel > .key { height: 40px; } }
+
+/* ===== v1.0.4 — responsive app screens ===== */
+/* setup: docked start bar with its own background instead of a floating button over the options */
+.start-bar { position: sticky; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 4; margin: 0 -16px; padding: 18px 16px 12px; background: linear-gradient(to bottom, transparent, var(--surface) 34%); pointer-events: auto; }
+.start-bar .btn, .start-bar .btn.l { --bh: 64px; width: min(100%, 420px); font-size: 20px; box-shadow: var(--shadow-3); }
+@media (min-width: 840px) { .start-bar { bottom: 0; margin: 0; padding-bottom: 20px; } .start-bar .btn, .start-bar .btn.l { --bh: 72px; width: auto; min-width: 280px; } }
+@media (max-width: 420px) { .setup-grid .grid.cols-2 { grid-template-columns: 1fr; } }
+.setup-grid .bgroup .seg { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* home: compact hero on phones, game cards two per row on phones and stretched on tablets */
+@media (max-width: 599px) {
+  .hero { min-height: 0; padding: 22px; gap: 12px; }
+  .hero h1 { font-size: clamp(34px, 11vw, 52px); }
+  .hero .btn.m { --bh: 48px; padding: 0 18px; font-size: 15px; }
+  .hero .row { gap: 8px; }
+  .hero .deco { width: 190px; height: 190px; }
+}
+.grid.auto.games { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+@media (max-width: 599px) {
+  .grid.auto.games, .grid.practice { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mode-card { min-height: 0; padding: 14px; gap: 6px; }
+  .mode-card .title-l { font-size: 17px; line-height: 22px; }
+  .mode-card .desc { font-size: 12.5px; line-height: 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .mode-card .shape { width: 40px; height: 40px; }
+  .mode-card .go { right: 10px; top: 10px; }
+}
+@media (max-width: 359px) { .mode-card .desc { display: none; } }
+/* wide screens: give the main column more room */
+@media (min-width: 1400px) { .main { max-width: 1320px; } }
+@media (max-width: 374px) { .hero .btn.m { --bh: 44px; padding: 0 14px; font-size: 14px; } .hero .btn.m .msr { display: none; } .welcome .spark { display: none; } }
+.install-card .grow { min-width: min(100%, 190px); }
+@media (max-width: 420px) { .install-card > .btn { width: 100%; } }
+/* phones held sideways: navigation rail on the left instead of a tall bottom bar */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) and (max-width: 839px) {
+  .navbar { inset: 0 auto 0 0; width: 76px; flex-direction: column; justify-content: center; gap: 4px; padding: 8px 0; background: var(--surface-container); }
+  .navbar .nav-item { flex: 0; }
+  .navbar .nav-item .pill { width: 48px; height: 28px; }
+  .navbar .nav-item .label-m { font-size: 10px; }
+  .shell:not(.fullscreen) .main { padding-left: 92px; padding-right: 16px; padding-bottom: 24px; }
+  .start-bar { bottom: 0; margin: 0; padding-bottom: 10px; }
+  .start-bar .btn, .start-bar .btn.l { --bh: 56px; }
+  .snackbar { bottom: 16px; }
+}
+@media (max-height: 520px) {
+  .start-bar { padding-top: 10px; padding-bottom: 8px; }
+  .start-bar .btn, .start-bar .btn.l { --bh: 46px; font-size: 17px; min-width: 200px; }
+  .start-bar .btn .msr { font-size: 24px; }
+}
