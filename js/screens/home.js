@@ -120,7 +120,7 @@ export function Home() {
       <div class="label-l" style="opacity:.8">${t('home.kicker')}</div>
       <h1>${t('home.title')}</h1>
       <div class="row wrap">
-        <${Btn} kind="filled" size="m" icon="play_arrow" onClick=${() => go('#/play/x01')}>${t('home.newGame')}<//>
+        <${Btn} kind="filled" size="m" icon="play_arrow" onClick=${() => go('#/play')}>${t('home.newGame')}<//>
         <${Btn} kind="tonal" size="m" onClick=${() => quick(501)}>501<//>
         <${Btn} kind="tonal" size="m" onClick=${quickCricket}>${t('mode.cricket')}<//>
       </div>

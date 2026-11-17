@@ -1,5 +1,5 @@
-import { html, useState } from '../../vendor/preact-htm.js';
-import { useStore, mePlayer, friendPlayer, offlinePlayer } from '../store.js';
+import { html, useState, useRef } from '../../vendor/preact-htm.js';
+import { useStore, update, mePlayer, friendPlayer, offlinePlayer } from '../store.js';
 import { t } from '../i18n.js';
 import { Icon, IconBtn, Btn, Seg, Switch, Slider, Avatar, snack, openDialog, haptic } from '../ui.js';
 import { startMatch, playerFromBot } from '../match.js';
@@ -76,13 +76,15 @@ function addPlayersDialog({ st, roster, room, allowBot, type }) {
   });
 }
 
-export function Setup({ type, preset }) {
+export function Setup({ type, preset, picker, onPick, carry }) {
   const st = useStore();
   const last = st.lastSetup[type] || {};
   const maxP = SUPPORTS_TEAMS[type] ? 8 : MAX_PLAYERS[type];
   const [roster, setRoster] = useState(() => {
     const seen = new Set();
     const r = (last.players || []).map((p) => resolve(p, st)).filter((p) => p && (!p.bot || SUPPORTS_BOT[type]) && !seen.has(p.id) && seen.add(p.id));
+    const cr = (carry?.current || []).filter((p) => !p.bot || SUPPORTS_BOT[type]);
+    if (cr.length) return cr.slice(0, maxP);
     return (r.length ? r : [mePlayer(st)]).slice(0, maxP);
   });
 
@@ -91,14 +93,14 @@ export function Setup({ type, preset }) {
   const [custom, setCustom] = useState(![301, 501, 701, 1001].includes(last.start || 501));
   const [inR, setIn] = useState(last.in || 'straight');
   const [outR, setOut] = useState(last.out || 'double');
-  const [fmt, setFmt] = useState(last.fmt || 'first');
+  const [fmt, setFmt] = useState(last.fmt || 'best');
   const [sets, setSets] = useState(!!last.sets);
   const [legs, setLegs] = useState(last.legsN || 3);
   const [setsN, setSetsN] = useState(last.setsN || 3);
   // Cricket
   const [cMode, setCMode] = useState(preset || (type === 'cricket' && last.mode ? last.mode : 'cricket'));
-  // default penalty mode per cricket variant: Fullboard/Tactics penalised, Cricket without penalty
-  const defScoring = (m) => (m === 'fullboard' || m === 'tactics' ? 'penalty' : 'none');
+  // v1.0.7: every cricket variant defaults to the penalty mode
+  const defScoring = () => 'penalty';
   // v1.0.5: three penalty modes; older 'double' / 'points' setups fall back to penalty / none
   const [scoring, setScoring] = useState(() => { const sc = last.scoring === 'double' ? 'penalty' : last.scoring === 'points' ? 'none' : last.scoring; return sc || (last.cutthroat || last.variant === 'cutthroat' ? 'penalty' : defScoring(preset || last.mode)); });
   const [no1011, setNo1011] = useState(!!last.no1011);
@@ -121,6 +123,7 @@ export function Setup({ type, preset }) {
   const [ckRounds, setCkRounds] = useState(last.rounds || 10);
 
   const total = roster.length;
+  if (carry && maxP > 1) carry.current = roster; // the game picker keeps the players when switching games
   const teamIdx = (p, i) => (teamOf[p.id] ?? i % nTeams) % nTeams;
   const toFirst = (n) => (fmt === 'best' ? Math.floor(n / 2) + 1 : n);
 
@@ -204,7 +207,7 @@ export function Setup({ type, preset }) {
   const fmtLabel = (n, one, many) => `${n} ${t(n === 1 ? one : many)}`;
 
   return html`<div class="screen-enter">
-    <${TopBar} title=${type === 'cricket' && cMode === 'akyaka' ? t('cricket.akyaka') : t('mode.' + type)} back="#/" />
+    <${TopBar} title=${picker ? t('home.newGame') : type === 'cricket' && cMode === 'akyaka' ? t('cricket.akyaka') : t('mode.' + type)} back="#/" />
     <div class="setup-grid setup-pad">
       <div class="card stack">
         <div class="row between">
@@ -256,6 +259,12 @@ export function Setup({ type, preset }) {
       </div>
 
       <div class="card stack">
+        ${picker && html`<div class="field game-pick-field"><span class="label-l">${t('setup.pickGame')}</span>
+          <div class="game-pick">${PICK_MAIN.map((g) => html`<button class=${'gp-main ' + g.c + (picker === g.id ? ' on' : '')} onClick=${() => picker !== g.id && onPick(g.id)}>
+            <${Icon} n=${g.icon} size=${28} /><span class="title-m">${t('mode.' + g.id)}</span>${picker === g.id && html`<${Icon} n="check_circle" size=${20} />`}</button>`)}</div>
+          <span class="label-m muted">${t('home.practice')}</span>
+          <div class="chips">${PICK_PRACTICE.map((id) => html`<button class=${'chip' + (picker === id ? ' on' : '')} onClick=${() => picker !== id && onPick(id)}>${t('mode.' + id)}</button>`)}</div>
+        </div>`}
         ${type === 'x01' && html`
           <div class="field"><span class="label-l">${t('setup.startScore')}</span>
             <${Seg} value=${custom ? 'c' : start} onChange=${(v) => { if (v === 'c') setCustom(true); else { setCustom(false); setStart(v); } }}
@@ -320,4 +329,17 @@ export function Setup({ type, preset }) {
     </div>
     <div class="start-bar"><${Btn} kind="filled" size="l" icon="play_arrow" onClick=${begin}>${t('setup.start')}<//></div>
   </div>`;
+}
+
+// ---------- New match: choose the game first, then its settings ----------
+const PICK_MAIN = [{ id: 'x01', icon: 'sports_score', c: 'c-primary' }, { id: 'cricket', icon: 'grid_view', c: 'c-tertiary' }];
+const PICK_PRACTICE = ['c121', 'atc', 'bobs27', 'doubles', 'checkout', 'shanghai', 'akyaka'];
+
+export function PlayHub() {
+  const st = useStore();
+  const [sel, setSel] = useState(() => (PICK_MAIN.some((g) => g.id === st.settings.lastGame) || PICK_PRACTICE.includes(st.settings.lastGame) ? st.settings.lastGame : 'x01'));
+  const carry = useRef(null);
+  const pick = (id) => { haptic(10); setSel(id); update((x) => { x.settings.lastGame = id; }); };
+  const [type, preset] = sel === 'akyaka' ? ['cricket', 'akyaka'] : [sel, undefined];
+  return html`<${Setup} key=${sel} type=${type} preset=${preset} picker=${sel} onPick=${pick} carry=${carry} />`;
 }

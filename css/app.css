@@ -894,3 +894,13 @@ html.locked .game { touch-action: pan-x pan-y; }
 .bull-dart .halo { fill: oklch(0.85 0.14 var(--ph) / 0.45); stroke: #fff; stroke-width: 0.8; }
 .bull-dart .tip { fill: oklch(0.7 0.2 var(--ph)); stroke: #fff; stroke-width: 1; }
 .bull-dart text { font-size: 9px; font-weight: 800; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 2.4px; }
+
+/* ===== v1.0.7 — choose the game first ===== */
+.game-pick-field { padding-bottom: 12px; border-bottom: 1px solid var(--outline-variant); }
+.game-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gp-main { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 14px; border: 0; cursor: pointer; border-radius: var(--r-xl); background: var(--surface-container-highest); color: var(--on-surface); text-align: left; transition: border-radius var(--d-fast) var(--spring-fast), background var(--d-fx), transform 90ms; }
+.gp-main .title-m { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gp-main:active { transform: scale(0.97); }
+.gp-main.on.c-primary { background: var(--primary); color: var(--on-primary); border-radius: var(--r-2xl); }
+.gp-main.on.c-tertiary { background: var(--tertiary); color: var(--on-tertiary); border-radius: var(--r-2xl); }
+.game-pick-field .chips { flex-wrap: wrap; overflow: visible; }

@@ -84,6 +84,6 @@ export function History() {
     <${TopBar} title=${t('nav.history')} back=${false} />
     <${Seg} size="s" value=${f} onChange=${setF} options=${[{ value: 'all', label: t('history.all') }, { value: 'x01', label: 'X01' }, { value: 'cricket', label: t('mode.cricket') }, { value: 'training', label: t('history.training') }]} />
     ${list.length ? html`<div class="list">${list.map((m) => html`<${RecentItem} m=${m} key=${m.id} />`)}</div>`
-      : html`<${EmptyState} icon="history" title=${t('history.empty')} text=${t('history.emptyText')}><${Btn} kind="filled" icon="play_arrow" onClick=${() => go('#/play/x01')}>${t('home.newGame')}<//><//>`}
+      : html`<${EmptyState} icon="history" title=${t('history.empty')} text=${t('history.emptyText')}><${Btn} kind="filled" icon="play_arrow" onClick=${() => go('#/play')}>${t('home.newGame')}<//><//>`}
   </div>`;
 }

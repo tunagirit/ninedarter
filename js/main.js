@@ -4,16 +4,15 @@ import { useStore } from './store.js';
 import { t } from './i18n.js';
 import { Icon, DialogHost, SnackHost } from './ui.js';
 import { Home } from './screens/home.js';
-import { Setup } from './screens/setup.js';
+import { Setup, PlayHub } from './screens/setup.js';
 import { Game } from './screens/game.js';
 import { Result, History } from './screens/results.js';
-import { Stats } from './screens/stats.js';
 import { Profile, newPasswordDialog } from './screens/profile.js';
 import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.0.6';
+export const VERSION = '1.0.7';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -34,15 +33,14 @@ function useHash() {
 const NAV = [
   { id: '', icon: 'target', key: 'nav.play' },
   { id: 'profile', icon: 'account_circle', key: 'nav.profile' },
-  { id: 'stats', icon: 'monitoring', key: 'nav.stats' },
   { id: 'history', icon: 'history', key: 'nav.history' },
   { id: 'settings', icon: 'settings', key: 'nav.settings' },
 ];
 
 function Nav({ current }) {
-  const top = ['play', 'game', 'result', 'messages', 'notifications'].includes(current) ? '' : current === 'friend' ? 'profile' : current;
+  const top = ['play', 'game', 'result', 'messages', 'notifications'].includes(current) ? '' : current === 'friend' || current === 'stats' ? 'profile' : current;
   return html`<nav class="navbar" aria-label="Main">
-    <a class="rail-fab" href="#/play/x01" title=${t('home.quick')}><${Icon} n="sports_score" /></a>
+    <a class="rail-fab" href="#/play" title=${t('home.newGame')}><${Icon} n="sports_score" /></a>
     ${NAV.map((n) => html`<a class=${'nav-item' + (top === n.id ? ' active' : '')} href=${'#/' + n.id} aria-current=${top === n.id ? 'page' : null}>
       <span class="pill"><${Icon} n=${n.icon} /></span><span class="label-m">${t(n.key)}</span>
     </a>`)}
@@ -110,12 +108,12 @@ function App() {
   const [a, b] = route;
   let screen, full = false;
   switch (a) {
-    case 'play': screen = b === 'akyaka' ? html`<${Setup} type="cricket" preset="akyaka" key="akyaka" />` : html`<${Setup} type=${b || 'x01'} key=${b} />`; break;
+    case 'play': screen = b === 'akyaka' ? html`<${Setup} type="cricket" preset="akyaka" key="akyaka" />` : b ? html`<${Setup} type=${b} key=${b} />` : html`<${PlayHub} />`; break;
     case 'game': full = true; screen = st.active ? html`<${Game} key=${st.active.id} />` : html`<${Home} />`; break;
     case 'result': screen = html`<${Result} id=${b} key=${b} />`; break;
     case 'history': screen = html`<${History} />`; break;
-    case 'stats': screen = html`<${Stats} pid=${b} />`; break;
-    case 'players': case 'profile': screen = html`<${Profile} />`; break;
+    case 'stats': screen = html`<${Profile} tab="stats" pid=${b} key=${'stats' + (b || '')} />`; break;
+    case 'players': case 'profile': screen = html`<${Profile} key="profile" />`; break;
     case 'settings': screen = html`<${Settings} />`; break;
     case 'friend': screen = html`<${FriendPage} id=${b} key=${b} />`; break;
     case 'messages': if (b) { full = true; screen = html`<${Chat} id=${b} key=${b} />`; } else screen = html`<${Messages} />`; break;

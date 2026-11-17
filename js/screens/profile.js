@@ -4,7 +4,7 @@ import { t } from '../i18n.js';
 import { Icon, IconBtn, Btn, Seg, Avatar, openDialog, confirmDialog, snack, fmt1, fmtPct } from '../ui.js';
 import { go } from '../match.js';
 import { TopBar } from './common.js';
-import { aggregateX01 } from './stats.js';
+import { Stats } from './stats.js';
 import * as cloud from '../cloud.js';
 
 // ---------- small form helpers ----------
@@ -173,12 +173,13 @@ function Friends() {
 }
 
 // ---------- profile screen ----------
-export function Profile() {
+export function Profile({ tab: tab0, pid } = {}) {
   const st = useStore();
   const me = mePlayer(st);
   const acc = st.account;
   const fileRef = useRef();
   const [nameEdit, setNameEdit] = useState(null);
+  const [tab, setTab] = useState(tab0 || (st.account || !cloud.cloudEnabled() ? 'stats' : 'account'));
 
   useEffect(() => { if (acc) cloud.loadFriends().catch(() => {}); }, [acc?.uid]);
 
@@ -217,7 +218,6 @@ export function Profile() {
     };
     return html`<${Inner} />`;
   });
-  const a = aggregateX01(st.matches, me.id);
   const c = st.cloud || {};
 
   return html`<div class="screen-enter stack">
@@ -242,17 +242,12 @@ export function Profile() {
       ${me.photo && html`<${Btn} kind="text" size="s" icon="hide_image" onClick=${removePhoto}>${t('profile.removePhoto')}<//>`}
     </section>
 
-    <div class="stat-tiles">
-      <div class="tile hero-tile"><span class="k">${t('stats.avg3')}</span><span class="v">${fmt1(a.avg)}</span></div>
-      <div class="tile"><span class="k">${t('stats.first9')}</span><span class="v">${fmt1(a.f9)}</span></div>
-      <div class="tile"><span class="k">${t('stats.coPct')}</span><span class="v">${a.dbl ? fmtPct(a.coPct) : '–'}</span></div>
-      <div class="tile"><span class="k">${t('stats.matches')}</span><span class="v">${a.n}</span></div>
-      <div class="tile"><span class="k">180</span><span class="v">${a.t180}</span></div>
-      <div class="tile"><span class="k">${t('stats.hiCo')}</span><span class="v">${a.hiCo || '–'}</span></div>
-    </div>
-    <${Btn} kind="tonal" icon="monitoring" onClick=${() => go('#/stats/' + me.id)}>${t('profile.allStats')}<//>
+    <!-- v1.0.7: Profile and Stats are one screen with two tabs -->
+    <${Seg} value=${tab} onChange=${(v) => { setTab(v); if (v === 'account' && location.hash.startsWith('#/stats')) history.replaceState(null, '', '#/profile'); }}
+      options=${[{ value: 'stats', label: t('nav.stats'), icon: 'monitoring' }, { value: 'account', label: t('profile.accountTab'), icon: 'group' }]} />
 
-    ${!cloud.cloudEnabled() ? html`<div class="card row"><${Icon} n="cloud_off" /><div class="grow body-m">${t('profile.noCloud')}</div></div>`
+    ${tab === 'stats' ? html`<${Stats} embedded pid=${pid || me.id} />`
+      : !cloud.cloudEnabled() ? html`<div class="card row"><${Icon} n="cloud_off" /><div class="grow body-m">${t('profile.noCloud')}</div></div>`
       : acc ? html`
         <${Friends} />
         <div class="list">

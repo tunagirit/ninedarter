@@ -115,6 +115,8 @@ const tr = {
   'start.throwAgain': 'Tekrar at', 'start.reset': 'Sıfırla',
   'setup.teamFirst': 'İlk atan', 'setup.prevTeam': 'Soldaki takıma taşı', 'setup.nextTeam': 'Sağdaki takıma taşı', 'setup.teamEmpty': 'Boş – oyuncuyu oklarla buraya taşı',
   'setup.teamHint': 'Oyuncuları ‹ › oklarıyla takımlar arasında taşı. Takımın en üstteki oyuncusu ilk atar.',
+  // v1.0.7
+  'setup.pickGame': 'Oyun', 'profile.accountTab': 'Arkadaşlar ve hesap',
 };
 
 const en = {
@@ -232,6 +234,8 @@ const en = {
   'start.throwAgain': 'Throw again', 'start.reset': 'Reset',
   'setup.teamFirst': 'Throws first', 'setup.prevTeam': 'Move to the team on the left', 'setup.nextTeam': 'Move to the team on the right', 'setup.teamEmpty': 'Empty – move a player here with the arrows',
   'setup.teamHint': 'Move players between teams with the ‹ › arrows. The top player of a team throws first.',
+  // v1.0.7
+  'setup.pickGame': 'Game', 'profile.accountTab': 'Friends & account',
 };
 
 const DICTS = { tr, en };

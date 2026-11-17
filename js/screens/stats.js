@@ -49,12 +49,12 @@ function Chart({ data, label }) {
 
 const Tile = ({ k, v, hero }) => html`<div class=${'tile' + (hero ? ' hero-tile' : '')}><span class="k">${k}</span><span class="v">${v}</span></div>`;
 
-export function Stats({ pid }) {
+export function Stats({ pid, embedded }) {
   const st = useStore();
   const [type, setType] = useState('x01');
   const players = [mePlayer(st), ...st.players.map(offlinePlayer), ...st.friends.map(friendPlayer).filter((f) => st.matches.some((m) => m.players.some((p) => p.id === f.id)))];
   const sel = players.find((p) => p.id === pid) || players[0];
-  if (!sel) return html`<${TopBar} title=${t('nav.stats')} back=${false} /><${EmptyState} icon="monitoring" title=${t('stats.empty')} text=${t('stats.emptyText')}><${Btn} kind="filled" icon="person_add" onClick=${() => go('#/players')}>${t('players.add')}<//><//>`;
+  if (!sel) return html`${!embedded && html`<${TopBar} title=${t('nav.stats')} back=${false} />`}<${EmptyState} icon="monitoring" title=${t('stats.empty')} text=${t('stats.emptyText')}><${Btn} kind="filled" icon="person_add" onClick=${() => go('#/players')}>${t('players.add')}<//><//>`;
 
   let body;
   if (type === 'x01') {
@@ -112,8 +112,8 @@ export function Stats({ pid }) {
       : null;
   }
 
-  return html`<div class="screen-enter stack">
-    <${TopBar} title=${t('nav.stats')} back=${false} />
+  return html`<div class=${embedded ? 'stack' : 'screen-enter stack'}>
+    ${!embedded && html`<${TopBar} title=${t('nav.stats')} back=${false} />`}
     <div class="chips">${players.map((p) => html`<button class=${'chip' + (p.id === sel.id ? ' on' : '')} onClick=${() => go('#/stats/' + p.id)}><${Avatar} p=${p} />${p.name}</button>`)}</div>
     <${Seg} value=${type} onChange=${setType} options=${[{ value: 'x01', label: 'X01' }, { value: 'cricket', label: t('mode.cricket') }, { value: 'training', label: t('history.training') }]} />
     ${body || html`<${EmptyState} icon="query_stats" title=${t('stats.noData')} text=${t('stats.noDataText')} />`}
