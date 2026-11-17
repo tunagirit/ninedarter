@@ -64,7 +64,10 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; }
+html { height: 100%; }
+/* body grows with long pages so its background covers everything (html carries the nav-bar colour for overscroll) */
+body { min-height: 100%; }
 body {
   font-family: var(--font); background: var(--surface); color: var(--on-surface);
   font-size: 16px; line-height: 1.45; letter-spacing: 0.01em;
