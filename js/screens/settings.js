@@ -97,7 +97,7 @@ export function Settings() {
 
     <div class="card stack s" style="align-items:center;text-align:center;margin-top:8px">
       <span class="brand-word">nine<b>darter</b></span>
-      <span class="body-m muted">v1.0.4 · ${t('settings.about')}</span>
+      <span class="body-m muted">v1.0.4a · ${t('settings.about')}</span>
       <a class="btn text s" href="https://github.com/tunagirit/ninedarter" id="gh-link" target="_blank" rel="noopener"><${Icon} n="code" />GitHub</a>
     </div>
   </div>`;

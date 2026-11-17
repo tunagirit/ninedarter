@@ -13,7 +13,7 @@ import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.0.4';
+export const VERSION = '1.0.4a';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -49,6 +49,31 @@ function Nav({ current }) {
   </nav>`;
 }
 
+/**
+ * Browser/OS chrome colour (iOS home-indicator strip, Android status bar) = the bottom navigation bar colour.
+ * Reported as #rrggbb: some browsers (iOS) ignore oklch() here and fall back to the manifest colour.
+ */
+function syncThemeColor() {
+  setTimeout(() => {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;background:var(--surface-container)';
+    document.body.appendChild(probe);
+    const css = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    let hex = '#f1f0f7';
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 1;
+      const g = c.getContext('2d'); g.fillStyle = css; g.fillRect(0, 0, 1, 1);
+      const [r, gr, b] = g.getImageData(0, 0, 1, 1).data;
+      hex = '#' + [r, gr, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+    } catch {}
+    let meta = document.querySelector('meta[name=theme-color]');
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
+    meta.content = hex;
+    document.documentElement.style.backgroundColor = hex; // overscroll/bottom areas match the nav bar
+  }, 0);
+}
+
 function App() {
   const st = useStore();
   const route = useHash();
@@ -60,8 +85,11 @@ function App() {
     if (theme === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
     root.style.setProperty('--h', hue);
     root.lang = lang;
-    const meta = document.querySelector('meta[name=theme-color]');
-    if (meta) meta.content = getComputedStyle(document.body).backgroundColor;
+    syncThemeColor();
+    // follow the OS light/dark switch when the theme is "system"
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener?.('change', syncThemeColor);
+    return () => mq.removeEventListener?.('change', syncThemeColor);
   }, [theme, hue, lang]);
 
   const [a, b] = route;
