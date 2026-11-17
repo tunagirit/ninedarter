@@ -341,7 +341,7 @@ function CricketGame({ a }) {
   const padNums = s.mode === 'fullboard' ? Array.from({ length: 20 }, (_, i) => i + 1) : targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
   const hasBull = targets.includes(25) || targets.includes('H');
   const showPts = s.seq || s.scoring !== 'none';
-  const throwing = isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '';
+  const throwing = bo ? '' : ` · ${t('game.throwing', { name: pl.name })}`;
   const round = Math.min(CR.roundsDone(s) + 1, config.rounds || Infinity);
   // keypad grid: the Enter key fills the rest of the last row
   const padCols = padNums.length > 6 ? 5 : 4;
@@ -360,10 +360,11 @@ function CricketGame({ a }) {
             ${bo ? html`<${Icon} n="adjust" /><span>${t('game.bulloff')}</span>`
               : html`<span>${t('game.round')}</span><b>${round}</b>${config.rounds ? html`<span>/ ${config.rounds}</span>` : null}`}
           </div>
-          ${s.sides.map((members, i) => html`<div class=${'cell head' + (i === side ? ' activecol' : '')}>
-            ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi) => html`<${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} />`)}</div>`
+          ${s.sides.map((members, i) => html`<div class=${'cell head' + (i === side ? ' activecol' : '')}>${i === side && !s.finished && html`<span class="turn-dot"></span>`}
+            ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi) => html`<span class=${'tav' + (pi === cur && i === side ? ' on' : '')}><${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} /></span>`)}</div>`
               : html`<${Avatar} p=${config.players[members[0]]} spin=${i === side && config.players[members[0]].bot} />`}
             <span class="nm">${sideName(config, i)}</span>
+            ${i === side && !s.finished && html`<span class="thrower"><${Icon} n="sports_score" size=${14} /><span class="ellipsis">${pl.name}</span></span>`}
             ${bo ? html`<span class="pts bo">${i in bo.throws ? bullValLabel(bo.throws[i]) : bo.order.includes(i) ? '…' : '–'}</span>`
               : showPts && html`<span class="pts">${s.seq ? `${targets.filter((x) => view.marks[i][x] >= 3).length}/${targets.length}` : view.points[i]}</span>`}
             <span class="legs-won" title=${t('stats.legsWon')}>${t('game.legsWon')} <b>${s.legsWon[i]}</b></span>

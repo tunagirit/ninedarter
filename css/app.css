@@ -824,3 +824,14 @@ html.locked .game { touch-action: pan-x pan-y; }
   .cricket.compact ~ .input-panel { gap: 6px; padding: 8px; }
 }
 .dartpad button.b { line-height: 1.05; padding: 0 2px; overflow: hidden; }
+
+/* ===== v1.0.5b — Cricket: who is throwing ===== */
+.cricket .head { position: relative; transition: background var(--d-fx), box-shadow var(--d) var(--spring); }
+.cricket .head.activecol { box-shadow: inset 0 0 0 2px var(--primary); }
+.cricket .head .turn-dot { position: absolute; right: 8px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); animation: pulse-dot 1.4s ease-in-out infinite; }
+@keyframes pulse-dot { 50% { transform: scale(0.6); opacity: 0.6; } }
+.cricket .head .thrower { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-size: 12px; font-weight: 700; line-height: 1.3; }
+.cricket .head .thrower .msr { font-size: 14px; }
+.cricket .head .tav { display: inline-grid; border-radius: 50%; opacity: 0.55; transition: opacity var(--d-fast), transform var(--d) var(--spring); }
+.cricket .head .tav.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 2px var(--primary); }
+@media (orientation: portrait) and (max-height: 780px) { .cricket .head .thrower { font-size: 10px; padding: 1px 6px 1px 4px; } }
