@@ -64,9 +64,63 @@ export function Seg({ value, options, onChange, size = '', wrap = false }) {
 export const Switch = ({ checked, onChange, label }) =>
   html`<label class="switch"><input type="checkbox" checked=${checked} aria-label=${label} onChange=${(e) => { haptic(8); onChange(e.target.checked); }} /><span class="track"></span><span class="thumb"></span></label>`;
 
+/**
+ * Touch-friendly slider. The whole track is the touch target (tap to jump, drag horizontally anywhere),
+ * vertical swipes still scroll the page, and updates are throttled while dragging so heavy handlers
+ * (e.g. saving settings) don't make the drag stutter. Keyboard / screen readers keep the native range input.
+ */
 export function Slider({ min, max, step = 1, value, onInput, label }) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return html`<input class="slider" type="range" min=${min} max=${max} step=${step} value=${value} aria-label=${label} style=${`--pct:${pct}%`} onInput=${(e) => onInput(+e.target.value)} />`;
+  const [local, setLocal] = useState(null);
+  const drag = useRef(null);
+  const shown = local ?? value;
+  const pct = ((shown - min) / (max - min)) * 100;
+
+  const valueAt = (el, clientX) => {
+    const r = el.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    const v = Math.round((min + f * (max - min)) / step) * step;
+    return Math.min(max, Math.max(min, +v.toFixed(6)));
+  };
+  const emit = (v, force) => {
+    const d = drag.current;
+    setLocal(v);
+    const now = performance.now();
+    if (force || !d || now - d.last > 60) { if (d) d.last = now; onInput(v); }
+    else if (d) { clearTimeout(d.t); d.t = setTimeout(() => { d.last = performance.now(); onInput(v); }, 70); }
+  };
+
+  const down = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, active: e.pointerType === 'mouse', last: 0, t: 0 };
+    if (e.pointerType === 'mouse') { try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} emit(valueAt(e.currentTarget, e.clientX)); }
+    e.preventDefault();
+  };
+  const move = (e) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    if (!d.active) {
+      const dx = Math.abs(e.clientX - d.x), dy = Math.abs(e.clientY - d.y);
+      if (dy > 8 && dy > dx) { drag.current = null; return; } // vertical swipe: let the page scroll
+      if (dx < 4) return;
+      d.active = true;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+    }
+    emit(valueAt(e.currentTarget, e.clientX));
+  };
+  const up = (e) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    clearTimeout(d.t);
+    // a tap (no drag) jumps to the tapped position
+    onInput(d.active ? valueAt(e.currentTarget, e.clientX) : valueAt(e.currentTarget, d.x));
+    drag.current = null;
+    setLocal(null);
+  };
+  const cancel = () => { if (drag.current) clearTimeout(drag.current.t); drag.current = null; setLocal(null); };
+
+  return html`<input class="slider" type="range" min=${min} max=${max} step=${step} value=${shown} aria-label=${label} style=${`--pct:${pct}%`}
+    onInput=${(e) => { if (!drag.current) onInput(+e.target.value); }}
+    onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${cancel} onLostPointerCapture=${(e) => { if (drag.current?.active) up(e); }} />`;
 }
 
 export function Wavy({ value, max }) {

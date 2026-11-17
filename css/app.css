@@ -731,3 +731,12 @@ table.stats td.best { color: var(--primary); font-weight: 800; }
   .start-bar .btn, .start-bar .btn.l { --bh: 46px; font-size: 17px; min-width: 200px; }
   .start-bar .btn .msr { font-size: 24px; }
 }
+
+/* v1.0.4b — touch-friendly sliders: whole track is the touch target, bigger handle */
+.slider { height: 48px; touch-action: pan-y; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.slider::-webkit-slider-runnable-track { height: 18px; border-radius: 9px; }
+.slider::-webkit-slider-thumb { width: 10px; height: 40px; margin-top: -11px; border-radius: 5px; box-shadow: 0 0 0 5px var(--surface); }
+.slider::-moz-range-track { height: 18px; border-radius: 9px; }
+.slider::-moz-range-progress { height: 18px; border-radius: 9px; }
+.slider::-moz-range-thumb { width: 10px; height: 40px; border-radius: 5px; }
+.slider:active::-webkit-slider-thumb { width: 6px; }
