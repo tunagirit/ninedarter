@@ -46,7 +46,7 @@ export function compute(config, actions) {
   const sides = sidesOf(config);
   const n = sides.length;
   const scoring = scoringOf(config);
-  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', scoring, targets: targetsOf(config), numbers: targetsOf(config), cut: scoring === 'penalty' || scoring === 'double' || scoring === 'master', master: scoring === 'master', mult: scoring === 'double' ? 2 : 1, legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: 0, side: 0, current: sides[0][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false, bulloff: null };
+  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', scoring, targets: targetsOf(config), numbers: targetsOf(config), cut: scoring === 'penalty' || scoring === 'double' || scoring === 'master', master: scoring === 'master', mult: scoring === 'double' ? 2 : 1, legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: (config.first || 0) % n, side: (config.first || 0) % n, current: sides[(config.first || 0) % n][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false, bulloff: null };
   newLeg(s);
   for (const a of actions) applyVisit(s, config, a);
   return s;

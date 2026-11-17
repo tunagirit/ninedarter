@@ -107,6 +107,14 @@ const tr = {
   'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Tur limiti doldu – bull-off!', 'game.bulloffTie': 'Berabere – bull-off tekrar', 'game.bulloffSub': 'Bull\'a tek ok. İç bull dış bull\'u yener, beraberlikte tekrar atılır.',
   'game.bulloffWon': '{name} leg\'i bull-off ile aldı', 'game.bullMiss': 'Iska', 'game.redBull': 'Red Bull', 'game.enter': 'Giriş', 'game.missTurn': 'Iska', 'game.legsWon': 'Leg',
   'settings.uiScale': 'Görüntü boyutu', 'settings.uiScaleSub': 'Yazı ve tuşların boyutu', 'settings.scale.small': 'Küçük', 'settings.scale.medium': 'Orta', 'settings.scale.large': 'Büyük',
+  // v1.0.6
+  'start.title': 'Kim başlayacak?', 'start.sub': 'Her takımdan en üstteki oyuncu atar.', 'start.bull': 'Bull\'a en yakın', 'start.bullSub': 'Herkes bull\'a bir ok atar, düştüğü yer tahtada işaretlenir',
+  'start.coin': 'Yazı tura', 'start.coinSub': 'Profil fotoğraflı para çevrilir', 'start.order': 'Listedeki sırayla', 'start.orderSub': '{name} başlar',
+  'start.tossing': 'Para havada…', 'start.starts': '{name} başlıyor!', 'start.again': 'Tekrar at', 'start.boardLabel': 'Dart tahtası', 'start.tapBoard': 'Tahtaya dokun',
+  'start.holdHint': 'Atanı değiştirmek için basılı tut', 'start.pickThrower': '{side} için kim atıyor?', 'start.throwFor': '{name}: dartın düştüğü yere dokun', 'start.tie': 'Mesafeler eşit – tekrar atın',
+  'start.throwAgain': 'Tekrar at', 'start.reset': 'Sıfırla',
+  'setup.teamFirst': 'İlk atan', 'setup.prevTeam': 'Soldaki takıma taşı', 'setup.nextTeam': 'Sağdaki takıma taşı', 'setup.teamEmpty': 'Boş – oyuncuyu oklarla buraya taşı',
+  'setup.teamHint': 'Oyuncuları ‹ › oklarıyla takımlar arasında taşı. Takımın en üstteki oyuncusu ilk atar.',
 };
 
 const en = {
@@ -216,6 +224,14 @@ const en = {
   'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Round limit reached – bull-off!', 'game.bulloffTie': 'Tie – bull-off again', 'game.bulloffSub': 'One dart at the bull. Inner bull beats outer bull, a tie throws again.',
   'game.bulloffWon': '{name} takes the leg on the bull-off', 'game.bullMiss': 'Miss', 'game.redBull': 'Red Bull', 'game.enter': 'Enter', 'game.missTurn': 'Miss', 'game.legsWon': 'Legs',
   'settings.uiScale': 'Display size', 'settings.uiScaleSub': 'Size of text and buttons', 'settings.scale.small': 'Small', 'settings.scale.medium': 'Medium', 'settings.scale.large': 'Large',
+  // v1.0.6
+  'start.title': 'Who starts?', 'start.sub': 'The top player of each team throws.', 'start.bull': 'Closest to the bull', 'start.bullSub': 'Everyone throws one dart at the bull and marks it on the board',
+  'start.coin': 'Coin toss', 'start.coinSub': 'Flip a coin with the profile photos', 'start.order': 'As listed', 'start.orderSub': '{name} starts',
+  'start.tossing': 'Coin in the air…', 'start.starts': '{name} starts!', 'start.again': 'Flip again', 'start.boardLabel': 'Dartboard', 'start.tapBoard': 'Tap the board',
+  'start.holdHint': 'Press and hold to change the thrower', 'start.pickThrower': 'Who throws for {side}?', 'start.throwFor': '{name}: tap where the dart landed', 'start.tie': 'Same distance – throw again',
+  'start.throwAgain': 'Throw again', 'start.reset': 'Reset',
+  'setup.teamFirst': 'Throws first', 'setup.prevTeam': 'Move to the team on the left', 'setup.nextTeam': 'Move to the team on the right', 'setup.teamEmpty': 'Empty – move a player here with the arrows',
+  'setup.teamHint': 'Move players between teams with the ‹ › arrows. The top player of a team throws first.',
 };
 
 const DICTS = { tr, en };

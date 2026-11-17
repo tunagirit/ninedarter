@@ -26,7 +26,8 @@ export function compute(config, actions) {
     setsWon: Array(n).fill(0),
     totalLegsWon: Array(n).fill(0),
     turns: Array(n).fill(0), // visits thrown by each side (drives rotation inside a team)
-    legStarter: 0, setStarter: 0, side: 0, current: sides[0][0],
+    // config.first: the side that starts the match (chosen by bull-off / coin toss)
+    legStarter: (config.first || 0) % n, setStarter: (config.first || 0) % n, side: (config.first || 0) % n, current: sides[(config.first || 0) % n][0],
     set: 1, leg: 1,
     visits: [], legs: [],
     finished: false, winner: null, event: null, bulloff: null, lastBull: false,

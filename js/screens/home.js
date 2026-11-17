@@ -82,7 +82,7 @@ export function Home() {
   const quick = (start) => {
     const last = st.lastSetup.x01;
     if (!last) return go('#/play/x01');
-    startMatch('x01', { ...last, start });
+    startMatch('x01', { ...last, start, first: 0 });
   };
   // quick Cricket: reuse the last Cricket setup (players, mode, scoring) or open the Cricket setup
   const quickCricket = () => {
@@ -90,7 +90,7 @@ export function Home() {
     if (!last) return go('#/play/cricket');
     // v1.0.5 keeps three penalty modes: older 'double' / 'points' setups become penalty / none
     const scoring = last.scoring === 'double' ? 'penalty' : last.scoring === 'points' ? 'none' : last.scoring || (last.cutthroat || last.variant === 'cutthroat' ? 'penalty' : 'none');
-    startMatch('cricket', { ...last, scoring, rounds: 0 }); // v1.0.5c: the round limit belongs to X01
+    startMatch('cricket', { ...last, scoring, rounds: 0, first: 0 }); // v1.0.5c: the round limit belongs to X01
   };
 
   return html`<div class="screen-enter">

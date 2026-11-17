@@ -73,8 +73,9 @@ export function abandonMatch() {
 
 export function rematch(rec) {
   const cfg = structuredClone(rec.config);
-  // rotate the starting player
-  if (cfg.teams) cfg.teams.push(cfg.teams.shift());
+  // the other side starts the rematch
+  if (rec.type === 'x01' || rec.type === 'cricket') { const n = cfg.teams ? cfg.teams.length : cfg.players.length; cfg.first = ((cfg.first || 0) + 1) % n; }
+  else if (cfg.teams) cfg.teams.push(cfg.teams.shift());
   else if (cfg.players.length > 1) cfg.players.push(cfg.players.shift());
   if (rec.type === 'checkout') cfg.seed = Math.floor(Math.random() * 1e9);
   startMatch(rec.type, cfg);

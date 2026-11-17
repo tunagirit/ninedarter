@@ -839,3 +839,58 @@ html.locked .game { touch-action: pan-x pan-y; }
 /* ===== v1.0.5c — X01 bull-off ===== */
 .players > .pcard .bo-throw { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 4px 12px 4px 8px; border-radius: 999px; background: var(--tertiary-container); color: var(--on-tertiary-container); font-size: clamp(13px, 4.6cqw, 20px); font-weight: 600; }
 .players > .pcard .bo-throw b { font-weight: 850; }
+
+/* ===== v1.0.6 — team slots ===== */
+.team-board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.team-col { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: var(--r-xl); background: var(--surface-container-highest); min-width: 0; border-top: 4px solid var(--tc, var(--primary)); }
+.team-col.k0 { --tc: oklch(0.65 0.15 250); } .team-col.k1 { --tc: oklch(0.65 0.17 25); } .team-col.k2 { --tc: oklch(0.68 0.15 145); } .team-col.k3 { --tc: oklch(0.75 0.14 85); }
+.team-head { display: flex; align-items: center; gap: 8px; padding: 2px 2px 4px; }
+.team-head .team-chip { width: 28px; height: 28px; display: grid; place-items: center; cursor: default; }
+.team-slot { display: flex; flex-direction: column; gap: 2px; padding: 8px 6px 4px; border-radius: var(--r-l); background: var(--surface-container); animation: enter var(--d) var(--spring); min-width: 0; }
+.team-slot:first-of-type { box-shadow: inset 0 0 0 2px var(--tc); }
+.team-slot .ts-main { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.team-slot .kind { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--on-surface-variant); }
+.team-slot .ts-btns { display: flex; justify-content: space-between; }
+.team-slot .ts-btns .btn.icon-btn { --bh: 36px; }
+.team-slot .slider { height: 30px; }
+.team-empty { padding: 16px 8px; text-align: center; font-size: 13px; color: var(--on-surface-variant); border: 2px dashed var(--outline-variant); border-radius: var(--r-l); }
+@media (min-width: 1000px) { .team-board.n3, .team-board.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ===== v1.0.6 — who starts ===== */
+.start-opts { display: flex; flex-direction: column; gap: 8px; }
+.start-opt { display: flex; align-items: center; gap: 14px; text-align: left; padding: 14px 16px; border: 0; cursor: pointer; border-radius: var(--r-xl); background: var(--secondary-container); color: var(--on-secondary-container); transition: border-radius var(--d-fast) var(--spring-fast), transform 90ms; }
+.start-opt:active { border-radius: var(--r-m); transform: scale(0.98); }
+.start-opt .ico { width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--primary); color: var(--on-primary); }
+.start-opt b { display: block; font-size: 17px; }
+.start-opt small { display: block; font-size: 13px; opacity: 0.8; }
+.start-opt.quiet { background: var(--surface-container-highest); color: var(--on-surface); }
+.start-opt.quiet .ico { background: var(--surface-container); color: var(--on-surface); }
+/* coin */
+.coin-stage { position: relative; height: 230px; display: grid; place-items: center; perspective: 900px; }
+.coin { position: relative; width: 180px; height: 180px; transform-style: preserve-3d; transition: transform 2.2s cubic-bezier(0.2, 0.75, 0.25, 1); }
+.coin.flying { animation: coin-up 2.2s cubic-bezier(0.3, 0.6, 0.4, 1); }
+@keyframes coin-up { 0% { translate: 0 0; } 45% { translate: 0 -70px; } 100% { translate: 0 0; } }
+.coin-face { position: absolute; inset: 0; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: radial-gradient(circle at 35% 30%, #fff6c9, #e5bd4f 45%, #b8862a 100%); box-shadow: inset 0 0 0 7px #c99a34, inset 0 0 0 10px #f3d47a, 0 6px 18px rgb(0 0 0 / 0.35); color: #4a3510; }
+.coin-face.back { transform: rotateY(180deg); background: radial-gradient(circle at 35% 30%, #f4f4f6, #b9bcc6 45%, #868a96 100%); box-shadow: inset 0 0 0 7px #9a9eaa, inset 0 0 0 10px #e1e3ea, 0 6px 18px rgb(0 0 0 / 0.35); color: #2b2e36; }
+.coin-face .avatar.xl { width: 104px; height: 104px; }
+.coin-name { font-weight: 800; font-size: 15px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coin-shadow { position: absolute; bottom: 8px; width: 120px; height: 14px; border-radius: 50%; background: rgb(0 0 0 / 0.25); filter: blur(4px); }
+.coin-shadow.flying { animation: coin-shadow 2.2s cubic-bezier(0.3, 0.6, 0.4, 1); }
+@keyframes coin-shadow { 45% { transform: scale(0.6); opacity: 0.5; } }
+.coin-result { text-align: center; min-height: 1.5em; font-weight: 800; }
+/* bull-off board */
+.bull-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bull-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 0; cursor: pointer; border-radius: var(--r-xl); background: var(--surface-container-highest); color: var(--on-surface); min-width: 0; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: all var(--d-fast) var(--spring-fast); }
+.bull-chip:nth-child(2) { }
+.bull-chip.on { background: var(--primary-container); color: var(--on-primary-container); box-shadow: inset 0 0 0 2px var(--primary); }
+.bull-chip.win { background: var(--primary); color: var(--on-primary); }
+.bull-chip .bc-text { display: flex; flex-direction: column; align-items: center; min-width: 0; max-width: 100%; line-height: 1.2; }
+.bull-chip .bc-name { font-weight: 800; font-size: 15px; max-width: 100%; }
+.bull-chip .bc-side { font-size: 12px; opacity: 0.75; max-width: 100%; }
+.bull-chip .bc-dist { font-size: 18px; font-weight: 850; font-variant-numeric: tabular-nums; }
+.bull-pick { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: var(--r-l); background: var(--surface-container); }
+.bull-board { width: min(100%, 360px); aspect-ratio: 1; align-self: center; border-radius: 50%; cursor: crosshair; touch-action: none; box-shadow: 0 0 0 4px var(--surface-container-highest); }
+.bull-dart .halo { fill: oklch(0.85 0.14 var(--ph) / 0.45); stroke: #fff; stroke-width: 0.8; }
+.bull-dart .tip { fill: oklch(0.7 0.2 var(--ph)); stroke: #fff; stroke-width: 1; }
+.bull-dart text { font-size: 9px; font-weight: 800; fill: #fff; paint-order: stroke; stroke: #000; stroke-width: 2.4px; }
