@@ -9,7 +9,7 @@ const defaults = () => ({
   settings: {
     theme: 'system', hue: 285,
     lang: (navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en',
-    caller: true, callerVoice: '', vibrate: true, askDoubles: true, hints: true, inputMode: 'keypad', botSpeed: 900,
+    caller: true, callerVoice: '', vibrate: true, askDoubles: true, hints: true, inputMode: 'keypad', botSpeed: 900, uiScale: 'medium',
   },
   // the person using this device ("me"); linked to an account after sign-in
   profile: { localId: uid(), name: '', photo: null, hue: 285, shape: 'cookie', linked: false },

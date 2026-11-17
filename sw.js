@@ -1,5 +1,5 @@
 // ninedarter service worker — network-first app shell (always revalidated), offline fallback, runtime cache for fonts.
-const VERSION = 'nd-v1.0.4c';
+const VERSION = 'nd-v1.0.5';
 const FONTS = 'nd-fonts';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css', './icons/icon.svg',

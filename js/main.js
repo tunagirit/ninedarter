@@ -13,7 +13,7 @@ import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.0.4c';
+export const VERSION = '1.0.5';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -49,6 +49,20 @@ function Nav({ current }) {
   </nav>`;
 }
 
+/** Settings → Display size: small / medium (default) / large. */
+export const UI_SCALES = { small: 0.88, medium: 1, large: 1.14 };
+function applyScale(name) {
+  const z = UI_SCALES[name] || 1;
+  const root = document.documentElement;
+  root.style.zoom = z === 1 ? '' : String(z);
+  root.style.setProperty('--zoom', z);
+}
+
+// iOS Safari only shows :active press states when the page has a touch listener
+document.addEventListener('touchstart', () => {}, { passive: true });
+// iOS: no pinch-zoom of the app (the Display size setting replaces it)
+for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, (e) => e.preventDefault());
+
 /**
  * Browser/OS chrome colour (iOS home-indicator strip, Android status bar) = the bottom navigation bar colour.
  * Reported as #rrggbb: some browsers (iOS) ignore oklch() here and fall back to the manifest colour.
@@ -77,7 +91,7 @@ function syncThemeColor() {
 function App() {
   const st = useStore();
   const route = useHash();
-  const { theme, hue, lang } = st.settings;
+  const { theme, hue, lang, uiScale } = st.settings;
   useEffect(() => { if (st.cloud?.recovery) newPasswordDialog(); }, [st.cloud?.recovery]);
 
   useEffect(() => {
@@ -85,12 +99,13 @@ function App() {
     if (theme === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
     root.style.setProperty('--h', hue);
     root.lang = lang;
+    applyScale(uiScale);
     syncThemeColor();
     // follow the OS light/dark switch when the theme is "system"
     const mq = matchMedia('(prefers-color-scheme: dark)');
     mq.addEventListener?.('change', syncThemeColor);
     return () => mq.removeEventListener?.('change', syncThemeColor);
-  }, [theme, hue, lang]);
+  }, [theme, hue, lang, uiScale]);
 
   const [a, b] = route;
   let screen, full = false;
@@ -107,6 +122,7 @@ function App() {
     case 'notifications': screen = html`<${Notifications} />`; break;
     default: screen = html`<${Home} />`;
   }
+  useEffect(() => { document.documentElement.classList.toggle('locked', full && a === 'game'); }, [full, a]);
   return html`<div class=${'shell' + (full ? ' fullscreen' : '')}>
       ${!full && html`<${Nav} current=${a || ''} />`}
       <main class="main">${screen}</main>

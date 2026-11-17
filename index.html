@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
   <title>ninedarter</title>
   <meta name="description" content="ninedarter — Material 3 Expressive dart skor uygulaması: X01, Cricket, antrenman modları, botlar ve detaylı istatistikler." />
   <meta name="theme-color" content="#f1f1f6" />
@@ -22,6 +22,8 @@
       var s = JSON.parse(localStorage.getItem('ninedarter:v1') || '{}').settings || {};
       if (s.theme && s.theme !== 'system') document.documentElement.setAttribute('data-theme', s.theme);
       if (s.hue != null) document.documentElement.style.setProperty('--h', s.hue);
+      var z = { small: 0.88, large: 1.14 }[s.uiScale];
+      if (z) { document.documentElement.style.zoom = z; document.documentElement.style.setProperty('--zoom', z); }
     } catch (e) {}
   </script>
 </head>

@@ -98,6 +98,15 @@ const tr = {
   'profile.sync': 'Senkronizasyon', 'profile.synced': 'Senkronize edildi', 'profile.photoSaved': 'Profil fotoğrafı güncellendi', 'profile.changePhoto': 'Fotoğrafı değiştir', 'profile.online': 'Çevrimiçi hesap', 'profile.offline': 'Çevrimdışı profil',
   'profile.removePhoto': 'Fotoğrafı kaldır', 'profile.allStats': 'Tüm istatistikler', 'profile.noCloud': 'Hesap sistemi bu kurulumda henüz yapılandırılmadı. Uygulama çevrimdışı çalışmaya devam eder.',
   'profile.lastSync': 'Son: {t}', 'profile.syncNow': 'Şimdi eşitle', 'profile.changePw': 'Şifreyi değiştir', 'profile.signOut': 'Çıkış yap', 'profile.signOutQ': 'Çıkış yapılsın mı?', 'profile.signOutText': 'Verilerin bu cihazda kalır; tekrar giriş yaptığında eşitlenir.', 'profile.signedOut': 'Çıkış yapıldı',
+  // v1.0.5
+  'scoring.penalty': 'Cezalı', 'scoring.master': 'Master cezalı', 'scoring.none': 'Cezasız',
+  'scoring.penalty.desc': 'Kapattığın haneye fazladan atışlar, o haneyi kapatmamış rakiplere ceza puanı olarak yazılır. Hepsini kapatıp en az cezaya sahip olan kazanır.',
+  'scoring.master.desc': 'Cezalı gibi, ama cezayı yalnızca double ve triple yazar – tekli atış hiç ceza yazmaz. Örnek: 20\'de 2 işaretin varken triple 20 atarsan 20 kapanır ve 40 ceza yazılır; kapalı 20\'ye tekli 20 ceza yazmaz.',
+  'scoring.none.desc': 'Ceza puanı yok; tüm haneleri ilk kapatan kazanır.',
+  'setup.roundLimitSub': 'Limit dolduğunda kazanan çıkmamışsa leg bull-off ile belirlenir: her taraf bull\'a bir ok atar (iç bull dış bull\'u, dış bull ıskayı yener); beraberlikte tekrar atılır.',
+  'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Tur limiti doldu – bull-off!', 'game.bulloffTie': 'Berabere – bull-off tekrar', 'game.bulloffSub': 'Bull\'a tek ok. İç bull dış bull\'u yener, beraberlikte tekrar atılır.',
+  'game.bulloffWon': '{name} leg\'i bull-off ile aldı', 'game.bullMiss': 'Iska', 'game.redBull': 'Red Bull', 'game.enter': 'Giriş', 'game.missTurn': 'Iska', 'game.legsWon': 'Leg',
+  'settings.uiScale': 'Görüntü boyutu', 'settings.uiScaleSub': 'Yazı ve tuşların boyutu', 'settings.scale.small': 'Küçük', 'settings.scale.medium': 'Orta', 'settings.scale.large': 'Büyük',
 };
 
 const en = {
@@ -198,6 +207,15 @@ const en = {
   'profile.sync': 'Sync', 'profile.synced': 'Synced', 'profile.photoSaved': 'Profile photo updated', 'profile.changePhoto': 'Change photo', 'profile.online': 'Online account', 'profile.offline': 'Offline profile',
   'profile.removePhoto': 'Remove photo', 'profile.allStats': 'All stats', 'profile.noCloud': 'The account system is not configured on this build yet. The app keeps working offline.',
   'profile.lastSync': 'Last: {t}', 'profile.syncNow': 'Sync now', 'profile.changePw': 'Change password', 'profile.signOut': 'Sign out', 'profile.signOutQ': 'Sign out?', 'profile.signOutText': 'Your data stays on this device and syncs when you sign in again.', 'profile.signedOut': 'Signed out',
+  // v1.0.5
+  'scoring.penalty': 'Penalty', 'scoring.master': 'Master penalty', 'scoring.none': 'No penalty',
+  'scoring.penalty.desc': 'Extra marks on a target you closed are written as penalty points to opponents who have not closed it. Close everything with the fewest penalty points to win.',
+  'scoring.master.desc': 'Like penalty, but only doubles and trebles write penalty – a single never does. Example: with 2 marks on 20, a treble 20 closes it and writes 40 penalty; a single 20 on a closed 20 writes nothing.',
+  'scoring.none.desc': 'No penalty points; the first to close every target wins.',
+  'setup.roundLimitSub': 'If no one has won when the limit is reached, a bull-off decides the leg: each side throws one dart at the bull (inner bull beats outer bull beats a miss); a tie throws again.',
+  'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Round limit reached – bull-off!', 'game.bulloffTie': 'Tie – bull-off again', 'game.bulloffSub': 'One dart at the bull. Inner bull beats outer bull, a tie throws again.',
+  'game.bulloffWon': '{name} takes the leg on the bull-off', 'game.bullMiss': 'Miss', 'game.redBull': 'Red Bull', 'game.enter': 'Enter', 'game.missTurn': 'Miss', 'game.legsWon': 'Legs',
+  'settings.uiScale': 'Display size', 'settings.uiScaleSub': 'Size of text and buttons', 'settings.scale.small': 'Small', 'settings.scale.medium': 'Medium', 'settings.scale.large': 'Large',
 };
 
 const DICTS = { tr, en };

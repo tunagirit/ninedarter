@@ -66,6 +66,8 @@ export function Settings() {
         <div class="swatches">${HUES.map((h) => html`<button class=${'swatch' + (h === s.hue ? ' on' : '')} style=${`--sh:${h}`} onClick=${() => set('hue', h)} aria-label=${'hue ' + h}>${h === s.hue && html`<${Icon} n="check" />`}</button>`)}</div>
         <${Slider} min=${0} max=${359} value=${s.hue} label=${t('settings.color')} onInput=${(v) => set('hue', v)} />
       </div>
+      <div class="field"><span class="label-l">${t('settings.uiScale')}</span><span class="body-s muted">${t('settings.uiScaleSub')}</span>
+        <${Seg} value=${s.uiScale || 'medium'} onChange=${(v) => set('uiScale', v)} options=${['small', 'medium', 'large'].map((v) => ({ value: v, label: t('settings.scale.' + v), icon: v === 'small' ? 'text_decrease' : v === 'large' ? 'text_increase' : 'format_size' }))} /></div>
       <div class="field"><span class="label-l">${t('settings.language')}</span>
         <${Seg} value=${s.lang} onChange=${(v) => set('lang', v)} options=${[{ value: 'tr', label: 'Türkçe' }, { value: 'en', label: 'English' }]} /></div>
     </div>
@@ -97,7 +99,7 @@ export function Settings() {
 
     <div class="card stack s" style="align-items:center;text-align:center;margin-top:8px">
       <span class="brand-word">nine<b>darter</b></span>
-      <span class="body-m muted">v1.0.4c · ${t('settings.about')}</span>
+      <span class="body-m muted">v1.0.5 · ${t('settings.about')}</span>
       <a class="btn text s" href="https://github.com/tunagirit/ninedarter" id="gh-link" target="_blank" rel="noopener"><${Icon} n="code" />GitHub</a>
     </div>
   </div>`;

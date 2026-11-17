@@ -96,9 +96,10 @@ export function Setup({ type, preset }) {
   const [setsN, setSetsN] = useState(last.setsN || 3);
   // Cricket
   const [cMode, setCMode] = useState(preset || (type === 'cricket' && last.mode ? last.mode : 'cricket'));
-  // scoring per cricket mode: Fullboard/Tactics default to penalty, Cricket to classic points
-  const defScoring = (m) => (m === 'fullboard' || m === 'tactics' ? 'penalty' : 'points');
-  const [scoring, setScoring] = useState(last.scoring || (last.cutthroat || last.variant === 'cutthroat' ? 'penalty' : defScoring(preset || last.mode)));
+  // default penalty mode per cricket variant: Fullboard/Tactics penalised, Cricket without penalty
+  const defScoring = (m) => (m === 'fullboard' || m === 'tactics' ? 'penalty' : 'none');
+  // v1.0.5: three penalty modes; older 'double' / 'points' setups fall back to penalty / none
+  const [scoring, setScoring] = useState(() => { const sc = last.scoring === 'double' ? 'penalty' : last.scoring === 'points' ? 'none' : last.scoring; return sc || (last.cutthroat || last.variant === 'cutthroat' ? 'penalty' : defScoring(preset || last.mode)); });
   const [no1011, setNo1011] = useState(!!last.no1011);
   // Teams
   const [teamMode, setTeamMode] = useState(!!(SUPPORTS_TEAMS[type] && last.teams));
@@ -107,7 +108,7 @@ export function Setup({ type, preset }) {
   // 121 / Shanghai
   const [c121Rounds, setC121Rounds] = useState(type === 'c121' ? last.rounds || 10 : 10);
   const [shRounds, setShRounds] = useState(type === 'shanghai' ? last.rounds || 7 : 7);
-  const [rounds, setRounds] = useState(last.rounds ?? 0);
+  const [rounds, setRounds] = useState(type === 'cricket' ? last.rounds ?? 20 : 20);
   const [cLegs, setCLegs] = useState(last.legsToWin || 1);
   // ATC
   const [atcMode, setAtcMode] = useState(last.mode || 'any');
@@ -223,9 +224,9 @@ export function Setup({ type, preset }) {
           <div class="body-s muted">${t('cricket.' + cMode + '.desc')}</div>
           ${(cMode === 'fullboard' || cMode === 'tactics') && html`<div class="setting" style="border-radius:var(--r-l)"><${Icon} n="filter_list_off" /><div class="grow"><div class="title-s">${t('setup.no1011')}</div><div class="body-s muted">${t('setup.no1011Sub')}</div></div><${Switch} checked=${no1011} onChange=${setNo1011} label=${t('setup.no1011')} /></div>`}
           ${cMode !== 'akyaka' && html`<div class="field"><span class="label-l">${t('setup.scoring')}</span>
-            <${Seg} wrap value=${scoring} onChange=${setScoring} options=${['penalty', 'double', 'points', 'none'].map((v) => ({ value: v, label: t('scoring.' + v) }))} />
+            <${Seg} wrap value=${scoring} onChange=${setScoring} options=${['none', 'penalty', 'master'].map((v) => ({ value: v, label: t('scoring.' + v) }))} />
             <div class="body-s muted">${t('scoring.' + scoring + '.desc')}</div></div>`}
-          <div class="field"><span class="label-l">${t('setup.roundLimit')}</span>
+          <div class="field"><span class="label-l">${t('setup.roundLimit')}</span><div class="body-s muted">${t('setup.roundLimitSub')}</div>
             <${Seg} value=${rounds} onChange=${setRounds} options=${[0, 15, 20, 25].map((v) => ({ value: v, label: v ? String(v) : t('setup.none'), icon: false }))} /></div>
           <div class="row between"><span class="label-l muted">${t('setup.firstTo')} (${t('setup.legs')})</span><${Stepper} value=${cLegs} max=${15} onChange=${setCLegs} label=${t('setup.legs')} /></div>
 

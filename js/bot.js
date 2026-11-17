@@ -116,3 +116,9 @@ function cricketKey(st, me) {
   return keys.find((k) => someOpen(k)) ?? 20;
 }
 export { dartValue };
+
+/** Bull-off dart for a bot: 50 (inner bull), 25 (outer bull) or 0. */
+export function botBullOff(level) {
+  const d = throwAt({ n: 25, m: 2 }, botLevel(level).dsig * 1.6);
+  return d.n === 25 ? (d.m === 2 ? 50 : 25) : 0;
+}
