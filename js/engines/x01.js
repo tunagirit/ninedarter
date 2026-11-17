@@ -1,7 +1,7 @@
 // X01 engine with solo and team play. State is derived by replaying an action log -> undo is trivial.
 // Scores, legs and sets belong to sides (a player or a team); visits are attributed to the thrower.
 import { evaluateDarts } from '../darts.js';
-import { botX01Visit } from '../bot.js';
+import { botX01Visit, botBullOff } from '../bot.js';
 import { sidesOf } from '../teams.js';
 
 /*
@@ -10,7 +10,8 @@ config = {
   sets: false, setsToWin: 1, legsToWin: 3, // legsToWin = legs per set when sets=true
   players: [{id, name, hue, shape, bot?: level}], teams?: [[playerIdx...], ...]
 }
-action = { darts?: [{n,m}], score?: number, dartsUsed?: 1..3, dbl?: 0..3 }
+action = { darts?: [{n,m}], score?: number, dartsUsed?: 1..3, dbl?: 0..3 } or, during a bull-off, { bull: 0|25|50 }
+rounds: 0 = no limit; otherwise when that many rounds pass without a checkout a bull-off decides the leg
 */
 
 export function compute(config, actions) {
@@ -28,7 +29,7 @@ export function compute(config, actions) {
     legStarter: 0, setStarter: 0, side: 0, current: sides[0][0],
     set: 1, leg: 1,
     visits: [], legs: [],
-    finished: false, winner: null, event: null,
+    finished: false, winner: null, event: null, bulloff: null, lastBull: false,
   };
   for (const a of actions) applyVisit(s, config, a);
   return s;
@@ -38,6 +39,9 @@ const thrower = (s, side) => s.sides[side][s.turns[side] % s.sides[side].length]
 
 function applyVisit(s, config, a) {
   if (s.finished) return;
+  if (s.bulloff) return applyBullOff(s, config, a);
+  s.lastBull = false;
+  if (!a.darts && typeof a.score !== 'number') return;
   const side = s.side, p = s.current;
   const before = s.remaining[side];
   let v;
@@ -58,10 +62,51 @@ function applyVisit(s, config, a) {
   s.turns[side]++;
   s.event = null;
   if (!v.bust) s.remaining[side] = before - v.score;
-  if (v.checkout) {
-    s.legs.push({ set: s.set, leg: s.leg, winner: side, starter: s.legStarter, visits: s.visits });
+  if (v.checkout) return winLeg(s, config, side, p);
+  s.side = (side + 1) % s.n;
+  s.current = thrower(s, s.side);
+  if (config.rounds > 0 && s.visits.length % s.n === 0 && roundsDone(s) >= config.rounds) {
+    // round limit reached without a checkout -> bull-off decides the leg
+    const order = bulloffOrder(s, s.sides.map((_, i) => i));
+    s.bulloff = { order, throws: {}, round: 1, history: [] };
+    s.event = { type: 'bulloff' };
+    s.side = order[0];
+    s.current = thrower(s, s.side);
+  }
+}
+
+/** Rounds completed in the current leg. */
+export const roundsDone = (s) => Math.floor(s.visits.length / s.n);
+const bulloffOrder = (s, list) => [...list].sort((a, b) => ((a - s.legStarter + s.n) % s.n) - ((b - s.legStarter + s.n) % s.n));
+
+/** Bull-off dart: { bull: 0 | 25 | 50 }. Inner bull beats outer bull beats a miss; a tie at the top throws again. */
+function applyBullOff(s, config, a) {
+  const b = s.bulloff;
+  const v = a.bull === 50 ? 50 : a.bull === 25 ? 25 : 0;
+  b.throws[s.side] = v;
+  b.history.push({ s: s.side, p: s.current, v, r: b.round });
+  s.turns[s.side]++;
+  s.event = null;
+  s.lastBull = true;
+  const idx = b.order.indexOf(s.side);
+  if (idx < b.order.length - 1) { s.side = b.order[idx + 1]; s.current = thrower(s, s.side); return; }
+  const best = Math.max(...b.order.map((x) => b.throws[x]));
+  const top = b.order.filter((x) => b.throws[x] === best);
+  if (top.length === 1) return winLeg(s, config, top[0], s.current, true);
+  b.order = bulloffOrder(s, top);
+  b.throws = {};
+  b.round++;
+  s.event = { type: 'bulloffTie' };
+  s.side = b.order[0];
+  s.current = thrower(s, s.side);
+}
+
+function winLeg(s, config, side, p, byBull = false) {
+  {
+    s.legs.push({ set: s.set, leg: s.leg, winner: side, starter: s.legStarter, visits: s.visits, bulloff: s.bulloff?.history || null });
+    s.bulloff = null;
     s.legsWon[side]++; s.totalLegsWon[side]++;
-    s.event = { type: 'leg', side, p };
+    s.event = { type: 'leg', side, p, bulloff: byBull };
     let newSet = false;
     if (config.sets) {
       if (s.legsWon[side] >= config.legsToWin) {
@@ -82,8 +127,6 @@ function applyVisit(s, config, a) {
     s.remaining = Array(s.n).fill(config.start);
     s.opened = Array(s.n).fill(config.in === 'straight');
     s.visits = [];
-  } else {
-    s.side = (side + 1) % s.n;
   }
   s.current = thrower(s, s.side);
 }
@@ -96,6 +139,7 @@ function finish(s, side, p) {
 export function botAction(s, config) {
   const pl = config.players[s.current];
   if (!pl.bot || s.finished) return null;
+  if (s.bulloff) return { bull: botBullOff(pl.bot) };
   return { darts: botX01Visit(s.remaining[s.side], s.rules, s.opened[s.side], pl.bot) };
 }
 

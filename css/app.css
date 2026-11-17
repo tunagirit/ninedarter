@@ -835,3 +835,7 @@ html.locked .game { touch-action: pan-x pan-y; }
 .cricket .head .tav { display: inline-grid; border-radius: 50%; opacity: 0.55; transition: opacity var(--d-fast), transform var(--d) var(--spring); }
 .cricket .head .tav.on { opacity: 1; transform: scale(1.12); box-shadow: 0 0 0 2px var(--primary); }
 @media (orientation: portrait) and (max-height: 780px) { .cricket .head .thrower { font-size: 10px; padding: 1px 6px 1px 4px; } }
+
+/* ===== v1.0.5c — X01 bull-off ===== */
+.players > .pcard .bo-throw { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 4px 12px 4px 8px; border-radius: 999px; background: var(--tertiary-container); color: var(--on-tertiary-container); font-size: clamp(13px, 4.6cqw, 20px); font-weight: 600; }
+.players > .pcard .bo-throw b { font-weight: 850; }

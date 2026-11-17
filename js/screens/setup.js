@@ -108,7 +108,9 @@ export function Setup({ type, preset }) {
   // 121 / Shanghai
   const [c121Rounds, setC121Rounds] = useState(type === 'c121' ? last.rounds || 10 : 10);
   const [shRounds, setShRounds] = useState(type === 'shanghai' ? last.rounds || 7 : 7);
-  const [rounds, setRounds] = useState(type === 'cricket' ? last.rounds ?? 20 : 20);
+  // X01 round limit (switch): when on, a bull-off decides a leg nobody checked out within the limit
+  const [roundLimitOn, setRoundLimitOn] = useState(type === 'x01' && last.rounds > 0);
+  const [rounds, setRounds] = useState(type === 'x01' && last.rounds > 0 ? last.rounds : 20);
   const [cLegs, setCLegs] = useState(last.legsToWin || 1);
   // ATC
   const [atcMode, setAtcMode] = useState(last.mode || 'any');
@@ -126,8 +128,8 @@ export function Setup({ type, preset }) {
     // keep match records small: only remote photo URLs are stored, local photos are resolved live
     const players = roster.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, kind: p.kind, ...(p.bot ? { bot: p.bot } : {}), ...(p.photo && /^https?:/.test(p.photo) ? { photo: p.photo } : {}) }));
     let cfg;
-    if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN) };
-    else if (type === 'cricket') cfg = { players, mode: cMode, scoring: cMode === 'akyaka' ? 'none' : scoring, no1011: (cMode === 'fullboard' || cMode === 'tactics') && no1011, rounds, legsToWin: cLegs };
+    if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN), rounds: roundLimitOn ? rounds : 0 };
+    else if (type === 'cricket') cfg = { players, mode: cMode, scoring: cMode === 'akyaka' ? 'none' : scoring, no1011: (cMode === 'fullboard' || cMode === 'tactics') && no1011, rounds: 0, legsToWin: cLegs };
     else if (type === 'atc') cfg = { players, mode: atcMode, bull };
     else if (type === 'bobs27' || type === 'doubles') cfg = { players };
     else if (type === 'c121') cfg = { players: players.slice(0, 1), start: 121, rounds: c121Rounds };
@@ -217,6 +219,8 @@ export function Setup({ type, preset }) {
           <div class="body-m muted" style="text-align:center">
             ${sets ? `${t('setup.firstTo')} ${fmtLabel(toFirst(setsN), 'setup.set', 'setup.sets')} · ${t('setup.eachSet')} ${fmtLabel(toFirst(legs), 'setup.leg', 'setup.legs')}` : `${t('setup.firstTo')} ${fmtLabel(toFirst(legs), 'setup.leg', 'setup.legs')}`}
           </div>
+          <div class="setting" style="border-radius:var(--r-l)"><${Icon} n="timer" /><div class="grow"><div class="title-s">${t('setup.roundLimit')}</div><div class="body-s muted">${t('setup.roundLimitSub')}</div></div><${Switch} checked=${roundLimitOn} onChange=${setRoundLimitOn} label=${t('setup.roundLimit')} /></div>
+          ${roundLimitOn && html`<${Seg} value=${rounds} onChange=${setRounds} options=${[10, 15, 20, 25].map((v) => ({ value: v, label: t('setup.roundsN', { n: v }), icon: false }))} />`}
         `}
         ${type === 'cricket' && html`
           <div class="field"><span class="label-l">${t('setup.game')}</span>
@@ -226,8 +230,6 @@ export function Setup({ type, preset }) {
           ${cMode !== 'akyaka' && html`<div class="field"><span class="label-l">${t('setup.scoring')}</span>
             <${Seg} wrap value=${scoring} onChange=${setScoring} options=${['none', 'penalty', 'master'].map((v) => ({ value: v, label: t('scoring.' + v) }))} />
             <div class="body-s muted">${t('scoring.' + scoring + '.desc')}</div></div>`}
-          <div class="field"><span class="label-l">${t('setup.roundLimit')}</span><div class="body-s muted">${t('setup.roundLimitSub')}</div>
-            <${Seg} value=${rounds} onChange=${setRounds} options=${[0, 15, 20, 25].map((v) => ({ value: v, label: v ? String(v) : t('setup.none'), icon: false }))} /></div>
           <div class="row between"><span class="label-l muted">${t('setup.firstTo')} (${t('setup.legs')})</span><${Stepper} value=${cLegs} max=${15} onChange=${setCLegs} label=${t('setup.legs')} /></div>
 
         `}

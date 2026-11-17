@@ -71,8 +71,8 @@ function afterPush(a, ns) {
   const pl = a.config.players;
   if (a.type === 'x01') {
     const v = lastVisit(ns);
-    if (v) callScore(v.score, { bust: v.bust, checkout: v.checkout });
-    if (!ns.event && !ns.finished) {
+    if (v && !ns.lastBull) callScore(v.score, { bust: v.bust, checkout: v.checkout });
+    if (!ns.event && !ns.finished && !ns.bulloff) {
       const rem = ns.remaining[ns.side];
       if (rem <= 170 && checkoutRoute(rem, 3, a.config.out) && !pl[ns.current].bot) callRequire(rem);
     }
@@ -157,9 +157,10 @@ function X01Game({ a }) {
 
   const fail = () => { setErr(true); haptic(60); setTimeout(() => setErr(false), 400); };
   const submit = (action) => afterPush(a, pushAction(action));
+  const bullOff = (v) => { if (isBot || locked) return; haptic(12); lock(() => submit({ bull: v }), 120); };
 
   const ok = async (quickScore) => {
-    if (isBot || s.finished) return;
+    if (isBot || s.finished || s.bulloff) return;
     const score = typeof quickScore === 'number' ? quickScore : entry === '' ? 0 : parseInt(entry, 10);
     if (!isValidVisitScore(score)) return fail();
     const after = before - score;
@@ -217,7 +218,9 @@ function X01Game({ a }) {
   };
 
   const dartsLeft = mode === 'darts' ? 3 - pending.length : 3;
-  const sub = (config.sets ? `${t('game.set')} ${s.set} · ${t('game.leg')} ${s.leg}` : `${t('game.leg')} ${s.leg}`) + (isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '');
+  const bo = s.bulloff;
+  const roundTxt = config.rounds ? ` · ${t('game.round')} ${bo ? config.rounds : Math.min(X01.roundsDone(s) + 1, config.rounds)}/${config.rounds}` : '';
+  const sub = (config.sets ? `${t('game.set')} ${s.set} · ${t('game.leg')} ${s.leg}` : `${t('game.leg')} ${s.leg}`) + roundTxt + (bo ? ` · ${t('game.bulloff')}` : isTeamGame(config) ? ` · ${t('game.throwing', { name: pl.name })}` : '');
   const many = s.n > 2;
 
   return html`<div class="game">
@@ -230,7 +233,7 @@ function X01Game({ a }) {
         ${s.sides.map((_, i) => {
           const active = i === side && !s.finished;
           const rem = active && mode === 'darts' ? liveRem : s.remaining[i];
-          const route = active && set.hints && rem <= 170 ? checkoutRoute(rem, dartsLeft, config.out) : null;
+          const route = active && !bo && set.hints && rem <= 170 ? checkoutRoute(rem, dartsLeft, config.out) : null;
           const myVisits = s.visits.filter((v) => v.s === i);
           const lastV = myVisits.at(-1);
           return html`<div class=${'pcard' + (active ? ' active' : '')} key=${'side' + i}>
@@ -240,6 +243,7 @@ function X01Game({ a }) {
             </div>
             <div class="rem" key=${rem}><span class="bump" style="display:inline-block">${rem}</span></div>
             <div class="sub"><span>⌀ ${fmt1(X01.sideMatchAvg(s, i))}</span><span>${t('game.dartsN', { n: X01.sideDarts(s, i) })}</span>${lastV && html`<span>${t('game.last')}: ${lastV.bust ? t('game.bust') : lastV.score}</span>`}</div>
+            ${bo && html`<div class="bo-throw"><${Icon} n="adjust" size=${18} /> ${t('game.bulloff')}: <b>${i in bo.throws ? bullValLabel(bo.throws[i]) : bo.order.includes(i) ? '…' : '–'}</b></div>`}
             ${route ? html`<div class="hint">${route.map((d) => html`<b>${dartLabel(d)}</b>`)}</div>` : !many && html`<div class="visits">${myVisits.slice(-6).map((v) => html`<span class=${v.bust ? 'bust' : v.score >= 100 ? 'hi' : ''}>${v.bust ? '✕' : v.score}</span>`)}</div>`}
           </div>`;
         })}
@@ -247,7 +251,12 @@ function X01Game({ a }) {
 
       <div class=${'input-panel' + (isBot && !s.finished ? ' waiting' : '')}>
         ${isBot && !s.finished ? html`<div class="entry botmsg" style="justify-content:center;gap:12px"><${Avatar} p=${pl} spin /><span class="title-m">${t('game.botThinking', { name: pl.name })}</span></div>` : null}
-        ${mode === 'keypad' ? html`
+        ${bo ? (!isBot && html`<div class="bulloff-head"><div class="title-l">${t('game.bulloff')} · ${pl.name}</div><div class="body-s muted">${t('game.bulloffSub')}</div></div>
+          <div class="dartpad bulloff-pad">
+            <button class="alt" onClick=${() => bullOff(0)}>${t('game.bullMiss')}</button>
+            <button class="b" onClick=${() => bullOff(25)}>Bull</button>
+            <button class="b red" onClick=${() => bullOff(50)}>${t('game.redBull')}</button>
+          </div>`) : mode === 'keypad' ? html`
           <div class="entry"><span class=${'value' + (entry === '' ? ' placeholder' : '') + (err ? ' err' : '')}>${entry === '' ? t('game.enterScore') : entry}</span>
             ${entry !== '' && before - +entry >= 0 && html`<span class="body-m muted">→ ${before - +entry}</span>`}
           </div>
