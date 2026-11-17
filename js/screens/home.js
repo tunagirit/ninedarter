@@ -84,6 +84,12 @@ export function Home() {
     if (!last) return go('#/play/x01');
     startMatch('x01', { ...last, start });
   };
+  // quick Cricket: reuse the last Cricket setup (players, mode, scoring) or open the Cricket setup
+  const quickCricket = () => {
+    const last = st.lastSetup.cricket;
+    if (!last) return go('#/play/cricket');
+    startMatch('cricket', { ...last });
+  };
 
   return html`<div class="screen-enter">
     <header class="topbar">
@@ -113,7 +119,8 @@ export function Home() {
       <h1>${t('home.title')}</h1>
       <div class="row wrap">
         <${Btn} kind="filled" size="m" icon="play_arrow" onClick=${() => go('#/play/x01')}>${t('home.newGame')}<//>
-        ${[501, 301].map((n) => html`<${Btn} kind="tonal" size="m" onClick=${() => quick(n)}>${n}<//>`)}
+        <${Btn} kind="tonal" size="m" onClick=${() => quick(501)}>501<//>
+        <${Btn} kind="tonal" size="m" onClick=${quickCricket}>${t('mode.cricket')}<//>
       </div>
     </section>
     <${Welcome} />

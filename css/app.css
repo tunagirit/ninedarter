@@ -740,3 +740,5 @@ table.stats td.best { color: var(--primary); font-weight: 800; }
 .slider::-moz-range-progress { height: 18px; border-radius: 9px; }
 .slider::-moz-range-thumb { width: 10px; height: 40px; border-radius: 5px; }
 .slider:active::-webkit-slider-thumb { width: 6px; }
+@media (max-width: 599px) { .hero .btn.m { padding: 0 16px; } }
+@media (max-width: 400px) { .hero .btn.m { padding: 0 13px; font-size: 14px; } .hero .row { gap: 6px; } }
