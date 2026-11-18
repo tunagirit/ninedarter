@@ -18,6 +18,8 @@ export const NUMBERS = VARIANTS.cricket;
      penalty = extra marks on a target you closed are penalty points for opponents who still have it open (lowest wins)
      master  = like penalty, but only doubles/trebles write penalty (a single never does): 2 marks on 20 + T20 = 40 penalty
    legacy (older matches): points = extra hits score for yourself (highest wins) · double = penalty ×2
+   v1.0.8: config.selfScore = true (all new matches) -> penalty / master marks score for YOU instead (DartCounter style):
+     close everything AND have at least as many points as every opponent to win; highest score wins.
    Round limit: when `rounds` complete without a winner the leg is decided by a bull-off
    (each side throws one dart at the bull, inner bull 50 > outer bull 25 > miss; a tie at the top throws again). */
 export const SCORINGS = ['penalty', 'master', 'none'];
@@ -46,7 +48,7 @@ export function compute(config, actions) {
   const sides = sidesOf(config);
   const n = sides.length;
   const scoring = scoringOf(config);
-  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', scoring, targets: targetsOf(config), numbers: targetsOf(config), cut: scoring === 'penalty' || scoring === 'double' || scoring === 'master', master: scoring === 'master', mult: scoring === 'double' ? 2 : 1, legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: (config.first || 0) % n, side: (config.first || 0) % n, current: sides[(config.first || 0) % n][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false, bulloff: null };
+  const s = { n, sides, mode: config.mode || 'cricket', seq: config.mode === 'akyaka', scoring, targets: targetsOf(config), numbers: targetsOf(config), cut: !config.selfScore && (scoring === 'penalty' || scoring === 'double' || scoring === 'master'), master: scoring === 'master', mult: scoring === 'double' ? 2 : 1, legsWon: Array(n).fill(0), turns: Array(n).fill(0), legStarter: (config.first || 0) % n, side: (config.first || 0) % n, current: sides[(config.first || 0) % n][0], leg: 1, legs: [], finished: false, winner: null, event: null, legOver: false, bulloff: null };
   newLeg(s);
   for (const a of actions) applyVisit(s, config, a);
   return s;

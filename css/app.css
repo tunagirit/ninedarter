@@ -904,3 +904,15 @@ html.locked .game { touch-action: pan-x pan-y; }
 .gp-main.on.c-primary { background: var(--primary); color: var(--on-primary); border-radius: var(--r-2xl); }
 .gp-main.on.c-tertiary { background: var(--tertiary); color: var(--on-tertiary); border-radius: var(--r-2xl); }
 .game-pick-field .chips { flex-wrap: wrap; overflow: visible; }
+
+/* ===== v1.0.8 — Cricket: tap the scoreboard ===== */
+.cricket-board-mode .cricket .cell.tap { cursor: pointer; transition: transform 90ms ease-out, background var(--d-fx), filter 90ms; -webkit-tap-highlight-color: transparent; }
+.cricket-board-mode .cricket .cell.tap:hover { filter: brightness(1.08); }
+.cricket-board-mode .cricket .cell.tap:active { transform: scale(0.95); filter: brightness(0.9); }
+.cricket-board-mode .cricket .mark { height: min(40px, 78%); }
+.cricket-board-mode .cricket .cell.num { font-size: clamp(22px, min(6vw, 4dvh), 36px); }
+.board-taps { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; min-height: 34px; }
+.board-taps .tapchip { padding: 4px 12px; border-radius: 999px; background: var(--primary); color: var(--on-primary); font-weight: 800; font-size: 15px; animation: bump var(--d) var(--spring-fast); }
+.input-panel .dartpad.board-pad { grid-template-columns: 1fr 3fr; height: clamp(56px, calc(9 * var(--vh)), 84px); }
+.dartpad.board-pad button { font-size: clamp(16px, calc(2.6 * var(--vh)), 22px); }
+@media (orientation: landscape) and (min-width: 560px) { .input-panel .dartpad.board-pad { flex: none; height: clamp(56px, calc(14 * var(--vh)), 110px); } }

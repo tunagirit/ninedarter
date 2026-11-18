@@ -339,13 +339,32 @@ function CricketGame({ a }) {
     if (pv.legOver || np.length === 3) lock(() => submit(np), pv.legOver ? 600 : 350);
   };
   const bullOff = (v) => { if (isBot || locked) return; haptic(12); lock(() => afterPush(a, pushAction({ bull: v })), 120); };
+  // v1.0.8: "board" input = tap the marks straight onto the scoreboard (numbers in the middle, players left/right)
+  const set = useStore().settings;
+  const canBoard = s.mode !== 'fullboard';
+  const boardMode = canBoard && set.cricketInput === 'board';
+  const toggleInput = () => { haptic(10); setPending([]); setMult(1); update((x) => { x.settings.cricketInput = boardMode ? 'darts' : 'board'; }); };
+  const pendRef = useRef(pending); pendRef.current = pending; // quick taps between renders
+  const tapCell = (i, x) => {
+    if (!boardMode || i !== side || isBot || locked || bo || s.finished || pendRef.current.length >= 9) return;
+    haptic(8);
+    const d = { n: x, m: x === 25 ? Math.min(mult, 2) : mult };
+    setMult(1);
+    const np = [...pendRef.current, d];
+    pendRef.current = np;
+    setPending(np);
+    if (CR.preview(config, a.actions, np).legOver) lock(() => submit(np), 600);
+  };
+  const submitBoard = () => lock(() => submit(pending.length ? pending : [{ n: 0, m: 1 }, { n: 0, m: 1 }, { n: 0, m: 1 }]), 10);
   const label = (d) => (d.n === 0 ? '–' : d.n === 25 ? (d.m === 2 ? 'RB' : 'B') : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : '') + d.n + (d.bed ? '→' + (d.m === 3 ? 'T' : 'D') : ''));
   const n = s.n;
   const targets = s.targets;
   const closedBy = (i, x) => view.marks[i][x] >= 3;
   const dead = (x) => (s.seq ? closedBy(side, x) : x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
   const inactive = (x) => s.mode === 'fullboard' && !(x in view.marks[0]);
-  const cols = `var(--numcol) repeat(${n}, minmax(0,1fr))`;
+  // board mode with two sides: player | number | player
+  const mirror = boardMode && n === 2;
+  const cols = mirror ? 'minmax(0,1fr) var(--numcol) minmax(0,1fr)' : `var(--numcol) repeat(${n}, minmax(0,1fr))`;
   const compact = targets.length > 8;
   const padNums = s.mode === 'fullboard' ? Array.from({ length: 20 }, (_, i) => i + 1) : targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
   const hasBull = targets.includes(25) || targets.includes('H');
@@ -359,17 +378,20 @@ function CricketGame({ a }) {
   const altWide = goSpan === 1;
   if (altWide) goSpan = padCols - ((before + 1) % padCols);
   const legsLine = config.legsToWin > 1 ? ` · ${t('setup.firstTo')} ${config.legsToWin}` : '';
+  const corner = html`<div class=${'cell corner' + (bo ? ' bo' : '')}>
+    ${bo ? html`<${Icon} n="adjust" /><span>${t('game.bulloff')}</span>`
+      : html`<span>${t('game.round')}</span><b>${round}</b>${config.rounds ? html`<span>/ ${config.rounds}</span>` : null}`}
+  </div>`;
 
-  return html`<div class="game">
-    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg}${legsLine}${throwing}`} />
+  return html`<div class=${'game' + (boardMode ? ' cricket-board-mode' : '')}>
+    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg}${legsLine}${throwing}`}>
+      ${canBoard && html`<${IconBtn} icon=${boardMode ? 'dialpad' : 'touch_app'} title=${t(boardMode ? 'game.inputPad' : 'game.inputBoard')} onClick=${toggleInput} />`}
+    <//>
     <div class="game-body">
       <div class=${'cricket' + (compact ? ' compact' : '')}>
         <div class="crow headrow" style=${`grid-template-columns:${cols}`}>
-          <div class=${'cell corner' + (bo ? ' bo' : '')}>
-            ${bo ? html`<${Icon} n="adjust" /><span>${t('game.bulloff')}</span>`
-              : html`<span>${t('game.round')}</span><b>${round}</b>${config.rounds ? html`<span>/ ${config.rounds}</span>` : null}`}
-          </div>
-          ${s.sides.map((members, i) => html`<div class=${'cell head' + (i === side ? ' activecol' : '')}>${i === side && !s.finished && html`<span class="turn-dot"></span>`}
+          ${!mirror && corner}
+          ${s.sides.map((members, i) => html`${mirror && i === 1 && corner}<div class=${'cell head' + (i === side ? ' activecol' : '')}>${i === side && !s.finished && html`<span class="turn-dot"></span>`}
             ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi) => html`<span class=${'tav' + (pi === cur && i === side ? ' on' : '')}><${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} /></span>`)}</div>`
               : html`<${Avatar} p=${config.players[members[0]]} spin=${i === side && config.players[members[0]].bot} />`}
             <span class="nm">${sideName(config, i)}</span>
@@ -379,10 +401,13 @@ function CricketGame({ a }) {
             <span class="legs-won" title=${t('stats.legsWon')}>${t('game.legsWon')} <b>${s.legsWon[i]}</b></span>
           </div>`)}
         </div>
-        ${targets.map((x) => html`<div class=${'crow' + (dead(x) ? ' dead' : '')} style=${`grid-template-columns:${cols}`}>
-          <div class=${'cell num' + (typeof x === 'string' || x === 25 ? ' txt' : '') + (s.seq && x === CR.nextTarget(view, side) ? ' next' : '')}>${keyLabel(x)}</div>
-          ${s.sides.map((_, i) => html`<div class=${'cell' + (i === side ? ' activecol' : '') + (closedBy(i, x) ? ' closed' : '')}><${Mark} n=${view.marks[i][x]} /></div>`)}
-        </div>`)}
+        ${targets.map((x) => {
+          const num = html`<div class=${'cell num' + (typeof x === 'string' || x === 25 ? ' txt' : '') + (s.seq && x === CR.nextTarget(view, side) ? ' next' : '')}>${keyLabel(x)}</div>`;
+          return html`<div class=${'crow' + (dead(x) ? ' dead' : '')} style=${`grid-template-columns:${cols}`}>
+          ${!mirror && num}
+          ${s.sides.map((_, i) => html`${mirror && i === 1 && num}<div class=${'cell' + (i === side ? ' activecol' : '') + (closedBy(i, x) ? ' closed' : '') + (boardMode && i === side && !isBot && !bo ? ' tap' : '')}
+            onClick=${boardMode ? () => tapCell(i, x) : null}><${Mark} n=${view.marks[i][x]} /></div>`)}
+        </div>`; })}
       </div>
       <div class="input-panel">
         ${isBot ? html`<div class="entry" style="justify-content:center;gap:12px"><${Avatar} p=${pl} spin /><span class="title-m">${t('game.botThinking', { name: pl.name })}</span></div>`
@@ -393,6 +418,14 @@ function CricketGame({ a }) {
             <button class="b" onClick=${() => bullOff(25)}>Bull</button>
             <button class="b red" onClick=${() => bullOff(50)}>${t('game.redBull')}</button>
           </div>`
+        : boardMode ? html`
+        <div class="board-taps">${pending.length ? pending.map((d) => html`<span class="tapchip">${label(d)}</span>`) : html`<span class="body-s muted">${t('game.tapHint', { name: pl.name })}</span>`}</div>
+        <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
+        <div class="dartpad board-pad">
+          <button class="alt" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
+          <button class=${'go' + (pending.length ? '' : ' miss')} onClick=${submitBoard}>
+            <${Icon} n=${pending.length ? 'keyboard_return' : 'block'} /> ${pending.length ? t('game.enter') : t('game.missTurn')}</button>
+        </div>`
         : html`
         <${DartSlots} darts=${pending} labels=${label} />
         <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />

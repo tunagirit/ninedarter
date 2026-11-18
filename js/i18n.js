@@ -100,8 +100,8 @@ const tr = {
   'profile.lastSync': 'Son: {t}', 'profile.syncNow': 'Şimdi eşitle', 'profile.changePw': 'Şifreyi değiştir', 'profile.signOut': 'Çıkış yap', 'profile.signOutQ': 'Çıkış yapılsın mı?', 'profile.signOutText': 'Verilerin bu cihazda kalır; tekrar giriş yaptığında eşitlenir.', 'profile.signedOut': 'Çıkış yapıldı',
   // v1.0.5
   'scoring.penalty': 'Cezalı', 'scoring.master': 'Master cezalı', 'scoring.none': 'Cezasız',
-  'scoring.penalty.desc': 'Kapattığın haneye fazladan atışlar, o haneyi kapatmamış rakiplere ceza puanı olarak yazılır. Hepsini kapatıp en az cezaya sahip olan kazanır.',
-  'scoring.master.desc': 'Cezalı gibi, ama cezayı yalnızca double ve triple yazar – tekli atış hiç ceza yazmaz. Örnek: 20\'de 2 işaretin varken triple 20 atarsan 20 kapanır ve 40 ceza yazılır; kapalı 20\'ye tekli 20 ceza yazmaz.',
+  'scoring.penalty.desc': 'Kapattığın haneye (rakip kapatmadıkça) fazladan atışlar sana puan yazar. Her şeyi kapatsan da rakibin puanını geçmeden kazanamazsın; hepsini kapatıp en yüksek puana sahip olan kazanır.',
+  'scoring.master.desc': 'Cezalı gibi puan sana yazılır, ama puanı yalnızca double ve triple yazar – tekli atış puan yazmaz. Örnek: 20\'de 2 işaretin varken triple 20 atarsan 20 kapanır ve 40 puan yazılır; kapalı 20\'ye tekli 20 puan yazmaz.',
   'scoring.none.desc': 'Ceza puanı yok; tüm haneleri ilk kapatan kazanır.',
   'setup.roundLimitSub': 'Belirlenen turda kimse bitiremezse leg bull-off ile belirlenir: her taraf bull\'a bir ok atar (Red Bull Bull\'u, Bull ıskayı yener); beraberlikte tekrar atılır.', 'setup.roundsN': '{n} tur',
   'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Tur limiti doldu – bull-off!', 'game.bulloffTie': 'Berabere – bull-off tekrar', 'game.bulloffSub': 'Bull\'a tek ok. İç bull dış bull\'u yener, beraberlikte tekrar atılır.',
@@ -117,6 +117,8 @@ const tr = {
   'setup.teamHint': 'Oyuncuları ‹ › oklarıyla takımlar arasında taşı. Takımın en üstteki oyuncusu ilk atar.',
   // v1.0.7
   'setup.pickGame': 'Oyun', 'profile.accountTab': 'Arkadaşlar ve hesap',
+  // v1.0.8
+  'game.inputPad': 'Tuş takımıyla gir', 'game.inputBoard': 'Tahtaya tıklayarak gir', 'game.tapHint': '{name}: işaretlemek için kendi sütunundaki kutulara dokun',
 };
 
 const en = {
@@ -219,8 +221,8 @@ const en = {
   'profile.lastSync': 'Last: {t}', 'profile.syncNow': 'Sync now', 'profile.changePw': 'Change password', 'profile.signOut': 'Sign out', 'profile.signOutQ': 'Sign out?', 'profile.signOutText': 'Your data stays on this device and syncs when you sign in again.', 'profile.signedOut': 'Signed out',
   // v1.0.5
   'scoring.penalty': 'Penalty', 'scoring.master': 'Master penalty', 'scoring.none': 'No penalty',
-  'scoring.penalty.desc': 'Extra marks on a target you closed are written as penalty points to opponents who have not closed it. Close everything with the fewest penalty points to win.',
-  'scoring.master.desc': 'Like penalty, but only doubles and trebles write penalty – a single never does. Example: with 2 marks on 20, a treble 20 closes it and writes 40 penalty; a single 20 on a closed 20 writes nothing.',
+  'scoring.penalty.desc': 'Extra marks on a target you closed (while an opponent still has it open) score points for you. Closing everything is not enough while you trail on points; close everything with the highest score to win.',
+  'scoring.master.desc': 'Points go to you like Penalty, but only doubles and trebles score – a single never does. Example: with 2 marks on 20, a treble 20 closes it and scores 40; a single 20 on a closed 20 scores nothing.',
   'scoring.none.desc': 'No penalty points; the first to close every target wins.',
   'setup.roundLimitSub': 'If nobody checks out within the limit, a bull-off decides the leg: each side throws one dart at the bull (inner bull beats outer bull beats a miss); a tie throws again.', 'setup.roundsN': '{n} rounds',
   'game.bulloff': 'Bull-off', 'game.bulloffStart': 'Round limit reached – bull-off!', 'game.bulloffTie': 'Tie – bull-off again', 'game.bulloffSub': 'One dart at the bull. Inner bull beats outer bull, a tie throws again.',
@@ -236,6 +238,8 @@ const en = {
   'setup.teamHint': 'Move players between teams with the ‹ › arrows. The top player of a team throws first.',
   // v1.0.7
   'setup.pickGame': 'Game', 'profile.accountTab': 'Friends & account',
+  // v1.0.8
+  'game.inputPad': 'Enter with the keypad', 'game.inputBoard': 'Tap the scoreboard', 'game.tapHint': '{name}: tap the boxes in your column to add marks',
 };
 
 const DICTS = { tr, en };
