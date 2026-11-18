@@ -76,12 +76,12 @@ export function Result({ id }) {
   </div>`;
 }
 
-export function History() {
+export function History({ embedded } = {}) {
   const st = useStore();
   const [f, setF] = useState('all');
   const list = st.matches.filter((m) => f === 'all' || (f === 'training' ? ['atc', 'bobs27', 'checkout', 'c121', 'doubles', 'shanghai'].includes(m.type) : m.type === f));
-  return html`<div class="screen-enter stack">
-    <${TopBar} title=${t('nav.history')} back=${false} />
+  return html`<div class=${embedded ? 'stack' : 'screen-enter stack'}>
+    ${!embedded && html`<${TopBar} title=${t('nav.history')} back=${false} />`}
     <${Seg} size="s" value=${f} onChange=${setF} options=${[{ value: 'all', label: t('history.all') }, { value: 'x01', label: 'X01' }, { value: 'cricket', label: t('mode.cricket') }, { value: 'training', label: t('history.training') }]} />
     ${list.length ? html`<div class="list">${list.map((m) => html`<${RecentItem} m=${m} key=${m.id} />`)}</div>`
       : html`<${EmptyState} icon="history" title=${t('history.empty')} text=${t('history.emptyText')}><${Btn} kind="filled" icon="play_arrow" onClick=${() => go('#/play')}>${t('home.newGame')}<//><//>`}

@@ -923,3 +923,20 @@ html.locked .game { touch-action: pan-x pan-y; }
 /* v1.0.8b — teams in free tapping: pick who gets the marks */
 .cricket .head .tav.pick { cursor: pointer; }
 .cricket .head .thrower.soft { background: var(--secondary-container); color: var(--on-secondary-container); }
+
+/* ===== v1.0.9 — Arena: tournament + online (coming soon) ===== */
+.arena-screen { display: flex; flex-direction: column; min-height: calc(100 * var(--vh) - 96px - env(safe-area-inset-bottom)); }
+.arena-split { flex: 1; display: grid; grid-template-rows: repeat(2, minmax(220px, 1fr)); gap: 12px; padding-bottom: 8px; }
+@media (min-width: 840px) { .arena-split { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: min(640px, calc(100 * var(--vh) - 140px)); } .arena-screen { min-height: 0; } }
+.arena-card { position: relative; overflow: hidden; border: 0; cursor: pointer; border-radius: var(--r-2xl); padding: 28px 24px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 6px; text-align: left; transition: border-radius var(--d-slow) var(--spring), transform var(--d) var(--spring); }
+.arena-card:active { transform: scale(0.98); border-radius: var(--r-xl); }
+.arena-card.c-primary { background: var(--primary-container); color: var(--on-primary-container); }
+.arena-card.c-tertiary { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.arena-card .arena-deco { position: absolute; right: -60px; top: -60px; width: 260px; height: 260px; opacity: 0.18; }
+.arena-card .arena-deco svg { width: 100%; height: 100%; fill: currentColor; }
+.arena-card .arena-icon { width: 96px; height: 96px; display: grid; place-items: center; border-radius: 32px; margin-bottom: auto; }
+.arena-card.c-primary .arena-icon { background: var(--primary); color: var(--on-primary); }
+.arena-card.c-tertiary .arena-icon { background: var(--tertiary); color: var(--on-tertiary); }
+.arena-card .arena-title { font-size: clamp(28px, 7vw, 44px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.arena-card .arena-sub { font-size: 15px; opacity: 0.85; max-width: 420px; }
+.arena-card .arena-soon { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 16px; border-radius: 999px; background: var(--surface); color: var(--on-surface); font-weight: 700; font-size: 15px; }

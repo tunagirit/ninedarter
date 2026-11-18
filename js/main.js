@@ -6,13 +6,14 @@ import { Icon, DialogHost, SnackHost } from './ui.js';
 import { Home } from './screens/home.js';
 import { Setup, PlayHub } from './screens/setup.js';
 import { Game } from './screens/game.js';
-import { Result, History } from './screens/results.js';
+import { Result } from './screens/results.js';
+import { Arena } from './screens/arena.js';
 import { Profile, newPasswordDialog } from './screens/profile.js';
 import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.0.8c';
+export const VERSION = '1.0.9';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -33,12 +34,12 @@ function useHash() {
 const NAV = [
   { id: '', icon: 'target', key: 'nav.play' },
   { id: 'profile', icon: 'account_circle', key: 'nav.profile' },
-  { id: 'history', icon: 'history', key: 'nav.history' },
+  { id: 'arena', icon: 'stadium', key: 'nav.arena' },
   { id: 'settings', icon: 'settings', key: 'nav.settings' },
 ];
 
 function Nav({ current }) {
-  const top = ['play', 'game', 'result', 'messages', 'notifications'].includes(current) ? '' : current === 'friend' || current === 'stats' ? 'profile' : current;
+  const top = ['play', 'game', 'result', 'messages', 'notifications'].includes(current) ? '' : current === 'friend' || current === 'stats' || current === 'history' ? 'profile' : current;
   return html`<nav class="navbar" aria-label="Main">
     <a class="rail-fab" href="#/play" title=${t('home.newGame')}><${Icon} n="sports_score" /></a>
     ${NAV.map((n) => html`<a class=${'nav-item' + (top === n.id ? ' active' : '')} href=${'#/' + n.id} aria-current=${top === n.id ? 'page' : null}>
@@ -111,7 +112,8 @@ function App() {
     case 'play': screen = b === 'akyaka' ? html`<${Setup} type="cricket" preset="akyaka" key="akyaka" />` : b ? html`<${Setup} type=${b} key=${b} />` : html`<${PlayHub} />`; break;
     case 'game': full = true; screen = st.active ? html`<${Game} key=${st.active.id} />` : html`<${Home} />`; break;
     case 'result': screen = html`<${Result} id=${b} key=${b} />`; break;
-    case 'history': screen = html`<${History} />`; break;
+    case 'history': screen = html`<${Profile} tab="history" key="history" />`; break;
+    case 'arena': screen = html`<${Arena} />`; break;
     case 'stats': screen = html`<${Profile} tab="stats" pid=${b} key=${'stats' + (b || '')} />`; break;
     case 'players': case 'profile': screen = html`<${Profile} key="profile" />`; break;
     case 'settings': screen = html`<${Settings} />`; break;

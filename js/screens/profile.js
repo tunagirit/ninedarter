@@ -5,6 +5,7 @@ import { Icon, IconBtn, Btn, Seg, Avatar, openDialog, confirmDialog, snack, fmt1
 import { go } from '../match.js';
 import { TopBar } from './common.js';
 import { Stats } from './stats.js';
+import { History } from './results.js';
 import * as cloud from '../cloud.js';
 
 // ---------- small form helpers ----------
@@ -243,10 +244,10 @@ export function Profile({ tab: tab0, pid } = {}) {
     </section>
 
     <!-- v1.0.7: Profile and Stats are one screen with two tabs -->
-    <${Seg} value=${tab} onChange=${(v) => { setTab(v); if (v === 'account' && location.hash.startsWith('#/stats')) history.replaceState(null, '', '#/profile'); }}
-      options=${[{ value: 'stats', label: t('nav.stats'), icon: 'monitoring' }, { value: 'account', label: t('profile.accountTab'), icon: 'group' }]} />
+    <${Seg} value=${tab} onChange=${(v) => { setTab(v); if (v !== 'stats' && location.hash.startsWith('#/stats')) history.replaceState(null, '', '#/profile'); }}
+      options=${[{ value: 'stats', label: t('nav.stats'), icon: 'monitoring' }, { value: 'history', label: t('nav.history'), icon: 'history' }, { value: 'account', label: t('profile.accountTab'), icon: 'group' }]} />
 
-    ${tab === 'stats' ? html`<${Stats} embedded pid=${pid || me.id} />`
+    ${tab === 'stats' ? html`<${Stats} embedded pid=${pid || me.id} />` : tab === 'history' ? html`<${History} embedded />`
       : !cloud.cloudEnabled() ? html`<div class="card row"><${Icon} n="cloud_off" /><div class="grow body-m">${t('profile.noCloud')}</div></div>`
       : acc ? html`
         <${Friends} />

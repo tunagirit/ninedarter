@@ -116,11 +116,13 @@ const tr = {
   'setup.teamFirst': 'İlk atan', 'setup.prevTeam': 'Soldaki takıma taşı', 'setup.nextTeam': 'Sağdaki takıma taşı', 'setup.teamEmpty': 'Boş – oyuncuyu oklarla buraya taşı',
   'setup.teamHint': 'Oyuncuları ‹ › oklarıyla takımlar arasında taşı. Takımın en üstteki oyuncusu ilk atar.',
   // v1.0.7
-  'setup.pickGame': 'Oyun', 'profile.accountTab': 'Arkadaşlar ve hesap',
+  'setup.pickGame': 'Oyun', 'profile.accountTab': 'Arkadaşlar',
   // v1.0.8
   'game.inputPad': 'Tuş takımıyla gir', 'game.inputBoard': 'Tahtaya tıklayarak gir', 'game.tapHint': '{name}: işaretlemek için kendi sütunundaki kutulara dokun',
   // v1.0.8a
   'game.freeTap': 'Serbest', 'game.tapHintTeams': 'Sıra yok: takımın sütunundaki kutuya dokun. İşaretin kime yazılacağını seçmek için takım başlığındaki oyuncuya dokun.', 'game.tapHintFree': 'Sıra yok: işaretlemek için oyuncunun sütunundaki kutuya dokun. Double/Triple seçip dokunursan 2/3 işaret yazar.', 'game.undoneTap': 'Son işaret geri alındı',
+  // v1.0.9
+  'nav.arena': 'Arena', 'arena.tournament': 'Turnuva modu', 'arena.tournament.desc': 'Eleme ve lig usulü turnuvalar düzenle, fikstürü takip et.', 'arena.online': 'Online oyun', 'arena.online.desc': 'Arkadaşlarınla ya da rakiplerle internet üzerinden oyna.', 'arena.soon': 'Yakında geliyor', 'arena.soonSnack': '{name} yakında geliyor',
 };
 
 const en = {
@@ -239,11 +241,13 @@ const en = {
   'setup.teamFirst': 'Throws first', 'setup.prevTeam': 'Move to the team on the left', 'setup.nextTeam': 'Move to the team on the right', 'setup.teamEmpty': 'Empty – move a player here with the arrows',
   'setup.teamHint': 'Move players between teams with the ‹ › arrows. The top player of a team throws first.',
   // v1.0.7
-  'setup.pickGame': 'Game', 'profile.accountTab': 'Friends & account',
+  'setup.pickGame': 'Game', 'profile.accountTab': 'Friends',
   // v1.0.8
   'game.inputPad': 'Enter with the keypad', 'game.inputBoard': 'Tap the scoreboard', 'game.tapHint': '{name}: tap the boxes in your column to add marks',
   // v1.0.8a
   'game.freeTap': 'Free', 'game.tapHintTeams': 'No turns: tap a box in the team column. Tap a player in the team header to choose who gets the marks.', 'game.tapHintFree': 'No turns: tap a box in a player\'s column to add a mark. Pick Double/Triple first to add 2/3 marks.', 'game.undoneTap': 'Last mark undone',
+  // v1.0.9
+  'nav.arena': 'Arena', 'arena.tournament': 'Tournament mode', 'arena.tournament.desc': 'Run knockout and league tournaments and follow the fixtures.', 'arena.online': 'Online play', 'arena.online.desc': 'Play friends or opponents over the internet.', 'arena.soon': 'Coming soon', 'arena.soonSnack': '{name} is coming soon',
 };
 
 const DICTS = { tr, en };
