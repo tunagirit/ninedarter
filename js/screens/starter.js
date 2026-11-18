@@ -8,9 +8,18 @@ import { botLevel } from '../bot.js';
 
 /**
  * sides: [{ name, members: [player, ...] }, ...] (top player first).
- * Resolves to the index of the starting side, or null when cancelled.
+ * Resolves to { first, reps } — the starting side and, per side, the member who threw the bull-off
+ * (that member moves to the top of the team) — or null when cancelled.
  */
+let busy = false; // a double tap on Start must not open the menu twice
 export async function chooseStarter(sides) {
+  if (busy) return null;
+  busy = true;
+  try { return await chooseStarterInner(sides); } finally { busy = false; }
+}
+
+async function chooseStarterInner(sides) {
+  const plain = (first) => (first == null ? null : { first, reps: sides.map(() => 0) });
   const how = await openDialog((close) => html`
     <div class="icon-head"><${Icon} n="flag" size=${32} /></div>
     <div class="headline-s" style="text-align:center">${t('start.title')}</div>
@@ -22,8 +31,8 @@ export async function chooseStarter(sides) {
     </div>
     <div class="actions"><${Btn} kind="text" onClick=${() => close(null)}>${t('common.cancel')}<//></div>`);
   if (!how) return null;
-  if (how === 'order') return 0;
-  if (how === 'coin') return coinToss(sides);
+  if (how === 'order') return plain(0);
+  if (how === 'coin') return plain(await coinToss(sides));
   return bullOff(sides);
 }
 
@@ -59,9 +68,10 @@ function coinToss(sides) {
 }
 
 // ---------------- Bull-off on a board ----------------
-const VIEW = 118; // mm shown around the bull (treble ring included)
+const VIEW = 238; // the whole board: playing area (170 mm) + number ring
 const SEG_COLORS = ['#1d1d1f', '#efe6cf']; // singles: black / cream
 const RING_COLORS = ['#d1262f', '#1d8a4c']; // doubles & trebles: red / green
+const WIRE = '#c9c2ad';
 
 function arcPath(r1, r2, a1, a2) {
   const p = (r, a) => [Math.sin(a) * r, -Math.cos(a) * r];
@@ -69,15 +79,19 @@ function arcPath(r1, r2, a1, a2) {
   return `M${x1} ${y1} A${r2} ${r2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 0 0 ${x4} ${y4} Z`;
 }
 
+/** Full dartboard (mm, bull at 0,0) with the numbers and ninedarter branding on the outer ring. */
 function Board({ marks, onMark }) {
   const ref = useRef(null);
-  const segs = [];
+  const segs = [], wires = [], nums = [];
   BOARD_ORDER.forEach((n, i) => {
-    const a1 = ((i * 18 - 9) * Math.PI) / 180, a2 = ((i * 18 + 9) * Math.PI) / 180;
+    const a1 = ((i * 18 - 9) * Math.PI) / 180, a2 = ((i * 18 + 9) * Math.PI) / 180, mid = (i * 18 * Math.PI) / 180;
     const k = i % 2;
     segs.push(html`<path d=${arcPath(R.outerBull, R.trebleIn, a1, a2)} fill=${SEG_COLORS[k]} />`);
     segs.push(html`<path d=${arcPath(R.trebleIn, R.trebleOut, a1, a2)} fill=${RING_COLORS[k]} />`);
     segs.push(html`<path d=${arcPath(R.trebleOut, R.doubleIn, a1, a2)} fill=${SEG_COLORS[k]} />`);
+    segs.push(html`<path d=${arcPath(R.doubleIn, R.doubleOut, a1, a2)} fill=${RING_COLORS[k]} />`);
+    wires.push(html`<line x1=${Math.sin(a1) * R.outerBull} y1=${-Math.cos(a1) * R.outerBull} x2=${Math.sin(a1) * R.doubleOut} y2=${-Math.cos(a1) * R.doubleOut} />`);
+    nums.push(html`<text x=${Math.sin(mid) * 191} y=${-Math.cos(mid) * 191} class="bb-num">${n}</text>`);
   });
   const tap = (e) => {
     const svg = ref.current; if (!svg) return;
@@ -86,12 +100,20 @@ function Board({ marks, onMark }) {
     onMark(p.x, p.y);
   };
   return html`<svg ref=${ref} class="bull-board" viewBox=${`${-VIEW} ${-VIEW} ${VIEW * 2} ${VIEW * 2}`} onPointerDown=${tap} role="img" aria-label=${t('start.boardLabel')}>
-    <circle r=${VIEW * 1.5} fill="#121214" />
+    <defs>
+      <path id="bb-top" d="M -219 0 A 219 219 0 0 1 219 0" />
+      <path id="bb-bottom" d="M -226 0 A 226 226 0 0 0 226 0" />
+    </defs>
+    <circle r=${VIEW - 2} fill="#141416" stroke="#2c2c30" stroke-width="4" />
+    <circle r=${R.doubleOut + 2} fill="#0d0d0e" />
     ${segs}
     <circle r=${R.outerBull} fill=${RING_COLORS[1]} /><circle r=${R.bull} fill=${RING_COLORS[0]} />
-    ${[R.outerBull, R.bull].map((r) => html`<circle r=${r} fill="none" stroke="#c9c2ad" stroke-width="0.6" />`)}
+    <g stroke=${WIRE} stroke-width="0.8" fill="none" opacity="0.85">${wires}${[R.bull, R.outerBull, R.trebleIn, R.trebleOut, R.doubleIn, R.doubleOut].map((r) => html`<circle r=${r} />`)}</g>
+    ${nums}
+    <text class="bb-brand"><textPath href="#bb-top" startOffset="50%" text-anchor="middle">ninedarter</textPath></text>
+    <text class="bb-brand small"><textPath href="#bb-bottom" startOffset="50%" text-anchor="middle">ninedarter · every dart counts</textPath></text>
     ${marks.map((m) => m && html`<g class="bull-dart" transform=${`translate(${m.x} ${m.y})`} style=${`--ph:${m.hue}`}>
-      <circle r="7" class="halo" /><circle r="3.4" class="tip" /><text y="-10" text-anchor="middle">${m.label}</text></g>`)}
+      <circle r="10" class="halo" /><circle r="4.5" class="tip" /><text y="-14" text-anchor="middle">${m.label}</text></g>`)}
   </svg>`;
 }
 
@@ -154,7 +176,7 @@ function bullOff(sides) {
         <div class="coin-result title-m" aria-live="polite">${!done ? t('start.throwFor', { name: player(active).name }) : winner != null ? t('start.starts', { name: sides[winner].name }) : t('start.tie')}</div>
         <div class="actions"><${Btn} kind="text" onClick=${() => close(null)}>${t('common.cancel')}<//>
           ${marks.some(Boolean) && html`<${Btn} kind="tonal" icon="replay" onClick=${() => (done && winner == null ? retie() : (setMarks(sides.map(() => null)), setActive(0)))}>${done && winner == null ? t('start.throwAgain') : t('start.reset')}<//>`}
-          <${Btn} kind="filled" icon="play_arrow" onClick=${() => close(winner)} disabled=${winner == null}>${t('setup.start')}<//></div>`;
+          <${Btn} kind="filled" icon="play_arrow" onClick=${() => close({ first: winner, reps })} disabled=${winner == null}>${t('setup.start')}<//></div>`;
     };
     return html`<${Inner} />`;
   });

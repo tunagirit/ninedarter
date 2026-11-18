@@ -24,6 +24,7 @@ const ROWS = {
     ['stats.mpr', (s) => s.mpr, fmt1, true],
     ['stats.marks', (s) => s.marks, (v) => v, true],
     ['stats.fivePlus', (s) => s.fivePlus, (v) => v, true],
+    ...[5, 6, 7, 8, 9].map((k) => [['stats.nMarks', { n: k }], (s) => s['m' + k] ?? null, (v) => v, true]),
     ['stats.highMarks', (s) => s.highMarks, (v) => v, true],
     ['stats.rounds', (s) => s.rounds, (v) => v, null],
     ['stats.legsWon', (s) => s.legsWon, (v) => v, true],
@@ -73,7 +74,7 @@ export function StatsTable({ type, players, stats }) {
       const vals = stats.map((s) => get(s));
       const nums = vals.filter((v) => v != null);
       const best = players.length > 1 && hib != null && nums.length ? (hib ? Math.max(...nums) : Math.min(...nums)) : null;
-      return html`<tr><td>${k.includes('.') ? t(k) : k}</td>${vals.map((v) => html`<td class=${best != null && v === best ? 'best' : ''}>${v == null ? '–' : f(v)}</td>`)}</tr>`;
+      return html`<tr><td>${Array.isArray(k) ? t(k[0], k[1]) : k.includes('.') ? t(k) : k}</td>${vals.map((v) => html`<td class=${best != null && v === best ? 'best' : ''}>${v == null ? '–' : f(v)}</td>`)}</tr>`;
     })}</tbody>
   </table></div>`;
 }

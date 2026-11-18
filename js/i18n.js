@@ -123,6 +123,12 @@ const tr = {
   'game.freeTap': 'Serbest', 'game.tapHintTeams': 'Sıra yok: takımın sütunundaki kutuya dokun. İşaretin kime yazılacağını seçmek için takım başlığındaki oyuncuya dokun.', 'game.tapHintFree': 'Sıra yok: işaretlemek için oyuncunun sütunundaki kutuya dokun. Double/Triple seçip dokunursan 2/3 işaret yazar.', 'game.undoneTap': 'Son işaret geri alındı',
   // v1.0.9
   'nav.arena': 'Arena', 'arena.tournament': 'Turnuva modu', 'arena.tournament.desc': 'Eleme ve lig usulü turnuvalar düzenle, fikstürü takip et.', 'arena.online': 'Online oyun', 'arena.online.desc': 'Arkadaşlarınla ya da rakiplerle internet üzerinden oyna.', 'arena.soon': 'Yakında geliyor', 'arena.soonSnack': '{name} yakında geliyor',
+  // v1.1.0
+  'result.draw': 'Berabere', 'result.avgChart': 'Ortalama grafiği', 'result.legSummary': 'Leg özeti', 'result.doublesMap': 'Double haritası', 'result.bestDoubles': 'En iyi', 'result.zeroDoubles': 'Hiç vuramadığın',
+  'stats.nMarks': '{n} işaretli tur',
+  'setup.atcSkip': 'Double/Triple ileri atlatır', 'setup.atcSkipSub': 'Single 1, double 2, triple 3 hedef ilerletir',
+  'setup.outAtZero': '0\'da oyun biter', 'setup.outAtZeroSub': 'Puan 0 veya altına düşünce elenirsin (kapalıysa yalnızca 0\'ın altında)',
+  'setup.failRule': 'Bitiremezsen', 'setup.failDown': 'Bir aşağı in', 'setup.failStart': '121\'e dön',
 };
 
 const en = {
@@ -248,6 +254,12 @@ const en = {
   'game.freeTap': 'Free', 'game.tapHintTeams': 'No turns: tap a box in the team column. Tap a player in the team header to choose who gets the marks.', 'game.tapHintFree': 'No turns: tap a box in a player\'s column to add a mark. Pick Double/Triple first to add 2/3 marks.', 'game.undoneTap': 'Last mark undone',
   // v1.0.9
   'nav.arena': 'Arena', 'arena.tournament': 'Tournament mode', 'arena.tournament.desc': 'Run knockout and league tournaments and follow the fixtures.', 'arena.online': 'Online play', 'arena.online.desc': 'Play friends or opponents over the internet.', 'arena.soon': 'Coming soon', 'arena.soonSnack': '{name} is coming soon',
+  // v1.1.0
+  'result.draw': 'Draw', 'result.avgChart': 'Average chart', 'result.legSummary': 'Leg summary', 'result.doublesMap': 'Doubles map', 'result.bestDoubles': 'Best', 'result.zeroDoubles': 'Never hit',
+  'stats.nMarks': '{n}-mark rounds',
+  'setup.atcSkip': 'Doubles/trebles skip ahead', 'setup.atcSkipSub': 'A single moves 1 target, a double 2, a treble 3',
+  'setup.outAtZero': 'Out at 0', 'setup.outAtZeroSub': 'You are out when the score drops to 0 or below (off: only below 0)',
+  'setup.failRule': 'When you miss', 'setup.failDown': 'Go down one', 'setup.failStart': 'Back to 121',
 };
 
 const DICTS = { tr, en };

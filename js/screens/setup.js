@@ -118,6 +118,10 @@ export function Setup({ type, preset, picker, onPick, carry }) {
   // ATC
   const [atcMode, setAtcMode] = useState(last.mode || 'any');
   const [bull, setBull] = useState(last.bull ?? true);
+  // v1.1.0 practice options
+  const [atcSkip, setAtcSkip] = useState(type === 'atc' && !!last.skip);
+  const [outAtZero, setOutAtZero] = useState(type === 'bobs27' ? last.outAtZero ?? true : true);
+  const [failReset, setFailReset] = useState(type === 'c121' ? last.failReset || 'down' : 'down');
   // Checkout
   const [range, setRange] = useState(last.min ? `${last.min}-${last.max}` : '41-100');
   const [ckRounds, setCkRounds] = useState(last.rounds || 10);
@@ -134,9 +138,10 @@ export function Setup({ type, preset, picker, onPick, carry }) {
     let cfg;
     if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN), rounds: roundLimitOn ? rounds : 0 };
     else if (type === 'cricket') cfg = { players, mode: cMode, scoring: cMode === 'akyaka' ? 'none' : scoring, no1011: (cMode === 'fullboard' || cMode === 'tactics') && no1011, rounds: 0, legsToWin: cLegs, selfScore: true };
-    else if (type === 'atc') cfg = { players, mode: atcMode, bull };
-    else if (type === 'bobs27' || type === 'doubles') cfg = { players };
-    else if (type === 'c121') cfg = { players: players.slice(0, 1), start: 121, rounds: c121Rounds };
+    else if (type === 'atc') cfg = { players, mode: atcMode, bull, skip: atcMode === 'any' && atcSkip };
+    else if (type === 'bobs27') cfg = { players, outAtZero };
+    else if (type === 'doubles') cfg = { players };
+    else if (type === 'c121') cfg = { players: players.slice(0, 1), start: 121, rounds: c121Rounds, failReset };
     else if (type === 'shanghai') cfg = { players, rounds: shRounds };
     else if (type === 'checkout') { const [min, max] = range.split('-').map(Number); cfg = { players: players.slice(0, 1), min, max, rounds: ckRounds, seed: Math.floor(Math.random() * 1e9) }; }
     if (type === 'cricket' && !teamMode && players.length > MAX_PLAYERS.cricket) return snack(t('setup.tooMany', { n: MAX_PLAYERS.cricket }));
@@ -152,9 +157,12 @@ export function Setup({ type, preset, picker, onPick, carry }) {
       const sideIdx = cfg.teams || players.map((_, i) => [i]);
       if (sideIdx.length > 1) {
         const sides = sideIdx.map((tm, k) => ({ name: cfg.teams ? t('team.n', { n: k + 1 }) : roster[tm[0]].name, members: tm.map((i) => roster[i]) }));
-        const first = await chooseStarter(sides);
-        if (first == null) return;
-        cfg.first = first;
+        const pick = await chooseStarter(sides);
+        if (!pick) return;
+        cfg.first = pick.first;
+        // the player chosen to throw the bull-off for a team becomes that team's first thrower
+        // (swap the two players in the list, so the team slots keep that order next time too)
+        if (cfg.teams) cfg.teams.forEach((tm, k) => { const r = pick.reps[k] || 0; if (r) [cfg.players[tm[0]], cfg.players[tm[r]]] = [cfg.players[tm[r]], cfg.players[tm[0]]]; });
       }
     }
     startMatch(type, cfg);
@@ -308,12 +316,16 @@ export function Setup({ type, preset, picker, onPick, carry }) {
           <div class="field"><span class="label-l">${t('setup.target')}</span>
             <${Seg} value=${atcMode} onChange=${setAtcMode} options=${['any', 'double', 'treble'].map((v) => ({ value: v, label: t('setup.atc.' + v) }))} /></div>
           <div class="setting" style="border-radius:var(--r-l)"><${Icon} n="radio_button_checked" /><div class="grow">${t('setup.includeBull')}</div><${Switch} checked=${bull} onChange=${setBull} label=${t('setup.includeBull')} /></div>
+          ${atcMode === 'any' && html`<div class="setting" style="border-radius:var(--r-l)"><${Icon} n="fast_forward" /><div class="grow"><div class="title-s">${t('setup.atcSkip')}</div><div class="body-s muted">${t('setup.atcSkipSub')}</div></div><${Switch} checked=${atcSkip} onChange=${setAtcSkip} label=${t('setup.atcSkip')} /></div>`}
           <div class="body-s muted">${t('mode.atc.long')}</div>
         `}
-        ${type === 'bobs27' && html`<div class="body-m">${t('mode.bobs27.long')}</div>`}
+        ${type === 'bobs27' && html`<div class="body-m">${t('mode.bobs27.long')}</div>
+          <div class="setting" style="border-radius:var(--r-l)"><${Icon} n="block" /><div class="grow"><div class="title-s">${t('setup.outAtZero')}</div><div class="body-s muted">${t('setup.outAtZeroSub')}</div></div><${Switch} checked=${outAtZero} onChange=${setOutAtZero} label=${t('setup.outAtZero')} /></div>`}
         ${type === 'doubles' && html`<div class="body-m">${t('mode.doubles.long')}</div>`}
         ${type === 'c121' && html`<div class="field"><span class="label-l">${t('setup.rounds')}</span>
             <${Seg} value=${c121Rounds} onChange=${setC121Rounds} options=${[10, 20, 30].map((v) => ({ value: v, label: String(v), icon: false }))} /></div>
+          <div class="field"><span class="label-l">${t('setup.failRule')}</span>
+            <${Seg} value=${failReset} onChange=${setFailReset} options=${[{ value: 'down', label: t('setup.failDown') }, { value: 'start', label: t('setup.failStart') }]} /></div>
           <div class="body-m">${t('mode.c121.long')}</div>`}
         ${type === 'shanghai' && html`<div class="field"><span class="label-l">${t('setup.rounds')}</span>
             <${Seg} value=${shRounds} onChange=${setShRounds} options=${[{ value: 7, label: '1–7', icon: false }, { value: 20, label: '1–20', icon: false }]} /></div>

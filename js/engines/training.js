@@ -18,7 +18,9 @@ export const atc = {
       let used = 0;
       for (const h of a.hits) {
         used++; s.darts[p]++;
-        if (h) { s.hits[p]++; s.pos[p]++; }
+        // h: false (miss), true (hit = 1 step) or 1/2/3 steps (single / double / treble with config.skip)
+        const step = h === true ? 1 : Math.max(0, Math.min(3, +h || 0));
+        if (step) { s.hits[p]++; s.pos[p] = Math.min(targets.length, s.pos[p] + step); }
         if (s.pos[p] >= targets.length) break;
       }
       s.visits.push({ p, hits: a.hits.slice(0, used) });
@@ -48,7 +50,7 @@ export const bobs = {
       s.score[p] += delta; s.hits[p] += a.hits;
       s.visits.push({ p, target: tgt, hits: a.hits, delta });
       s.round[p]++;
-      if (s.score[p] < 0) s.out[p] = true;
+      if (config.outAtZero ? s.score[p] <= 0 : s.score[p] < 0) s.out[p] = true;
       // next active player
       let next = -1;
       for (let k = 1; k <= n; k++) { const c = (p + k) % n; if (active(c)) { next = c; break; } }
@@ -75,7 +77,7 @@ export const c121 = {
     for (const a of actions) {
       if (s.finished) break;
       s.results.push({ target: s.target, ok: a.ok, darts: a.ok ? a.darts : 9 });
-      if (a.ok) { s.best = Math.max(s.best, s.target); s.target++; } else s.target = Math.max(start, s.target - 1);
+      if (a.ok) { s.best = Math.max(s.best, s.target); s.target++; } else s.target = config.failReset === 'start' ? start : Math.max(start, s.target - 1);
       if (s.results.length >= config.rounds) { s.finished = true; s.event = { type: 'match', side: 0 }; }
     }
     return s;
@@ -103,7 +105,8 @@ export const doubles = {
       s.round[p]++;
       if (s.round.every((r) => r >= T.length)) {
         s.finished = true;
-        s.winner = s.hits.indexOf(Math.max(...s.hits));
+        const top = Math.max(...s.hits); const leaders = s.hits.filter((h) => h === top).length;
+        s.winner = leaders > 1 ? null : s.hits.indexOf(top); s.tie = leaders > 1; // equal hits = draw
         s.event = { type: 'match', side: s.winner };
       } else s.current = (p + 1) % n;
     }
@@ -138,7 +141,8 @@ export const shanghai = {
       if (isSh) { s.finished = true; s.winner = p; s.shanghai = p; s.event = { type: 'match', side: p }; break; }
       if (s.round.every((r) => r >= R)) {
         s.finished = true;
-        s.winner = s.score.indexOf(Math.max(...s.score));
+        const top = Math.max(...s.score); const leaders = s.score.filter((x) => x === top).length;
+        s.winner = leaders > 1 ? null : s.score.indexOf(top); s.tie = leaders > 1; // equal scores = draw
         s.event = { type: 'match', side: s.winner };
       } else s.current = (p + 1) % n;
     }

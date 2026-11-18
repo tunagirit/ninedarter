@@ -5,7 +5,11 @@ import { addPlayer } from '../store.js';
 
 export function modeName(type, c) {
   if (type === 'x01') {
-    const fmt = c.sets ? `${t('setup.firstTo')} ${c.setsToWin} ${t('setup.sets')}` : `${t('setup.firstTo')} ${c.legsToWin} ${t(c.legsToWin === 1 ? 'setup.leg' : 'setup.legs')}`;
+    // "best of" shows the number of legs/sets played (Best of 5), "first to" the number to win
+    const best = c.fmt === 'best' && (c.sets ? c.setsN : c.legsN);
+    const n = best ? (c.sets ? c.setsN : c.legsN) : c.sets ? c.setsToWin : c.legsToWin;
+    const unit = c.sets ? t('setup.sets') : t(n === 1 ? 'setup.leg' : 'setup.legs');
+    const fmt = `${t(best ? 'setup.bestOf' : 'setup.firstTo')} ${n} ${unit}`;
     return `${c.start} · ${fmt}${c.teams ? ' · ' + t('setup.teams') : ''}`;
   }
   if (type === 'cricket') return `${t('cricket.' + (c.mode || 'cricket'))}${c.no1011 ? ' · ' + t('setup.no1011Short') : ''}${c.scoring && c.scoring !== 'points' && c.mode !== 'akyaka' ? ' · ' + t('scoring.' + c.scoring) : !c.scoring && (c.cutthroat || c.variant === 'cutthroat') ? ' · ' + t('scoring.penalty') : ''}${c.teams ? ' · ' + t('setup.teams') : ''}`;

@@ -78,14 +78,16 @@ export function Stats({ pid, embedded }) {
   } else if (type === 'cricket') {
     const list = playerMatches(st.matches, sel.id, ['cricket']);
     let marks = 0, rounds = 0, wins = 0, multi = 0, five = 0;
-    for (const { m, s } of list) { marks += s.marks; rounds += s.rounds; five += s.fivePlus; if (m.players.length > 1) { multi++; if (isWinner(m, sel.id)) wins++; } }
+    const mk = { 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    for (const { m, s } of list) { marks += s.turnMarks ?? s.marks; rounds += s.rounds; five += s.fivePlus; for (const k in mk) mk[k] += s['m' + k] || 0; if (m.players.length > 1) { multi++; if (isWinner(m, sel.id)) wins++; } }
     body = list.length ? html`<div class="stat-tiles">
-        <${Tile} hero k=${t('stats.mpr')} v=${fmt1(rounds ? marks / rounds : 0)} />
+        <${Tile} hero k=${t('stats.mpr')} v=${rounds ? fmt1(marks / rounds) : '–'} />
         <${Tile} k=${t('stats.matches')} v=${list.length} />
         <${Tile} k=${t('stats.winPct')} v=${multi ? fmtPct((wins / multi) * 100) : '–'} />
         <${Tile} k=${t('stats.fivePlus')} v=${five} />
+        ${[5, 6, 7, 8, 9].map((k) => html`<${Tile} k=${t('stats.nMarks', { n: k })} v=${mk[k]} />`)}
       </div>
-      <div class="card"><div class="title-m" style="margin-bottom:8px">MPR</div><${Chart} data=${list.map((x) => x.s.mpr)} label="MPR" /></div>` : null;
+      <div class="card"><div class="title-m" style="margin-bottom:8px">MPR</div><${Chart} data=${list.map((x) => x.s.mpr).filter((v) => v != null)} label="MPR" /></div>` : null;
   } else {
     const atc = playerMatches(st.matches, sel.id, ['atc']);
     const bob = playerMatches(st.matches, sel.id, ['bobs27']);

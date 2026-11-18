@@ -204,9 +204,18 @@ export function stats(s, config) {
   const all = [...s.legs.flatMap((l) => l.visits), ...s.visits];
   return config.players.map((_, p) => {
     const mySide = s.sides.findIndex((sd) => sd.includes(p));
-    let marks = 0, darts = 0, rounds = 0, t = 0, high = 0;
-    for (const v of all) if (v.p === p) { marks += v.marks; darts += v.dartsUsed; if (!v.tap) rounds++; if (v.marks >= 5) t++; if (v.marks > high) high = v.marks; }
-    return { marks, darts, rounds, mpr: rounds ? marks / rounds : 0, fivePlus: t, highMarks: high, legsWon: s.legsWon[mySide] };
+    // turn-based visits drive MPR and the 5–9 mark counts; free taps (no turns) only add to the mark total
+    let marks = 0, turnMarks = 0, darts = 0, rounds = 0, t = 0, high = 0;
+    const byMarks = { 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    for (const v of all) if (v.p === p) {
+      marks += v.marks; darts += v.dartsUsed;
+      if (v.tap) continue;
+      rounds++; turnMarks += v.marks;
+      if (v.marks >= 5) t++;
+      if (v.marks >= 5 && v.marks <= 9) byMarks[v.marks]++;
+      if (v.marks > high) high = v.marks;
+    }
+    return { marks, turnMarks, darts, rounds, mpr: rounds ? turnMarks / rounds : null, fivePlus: t, m5: byMarks[5], m6: byMarks[6], m7: byMarks[7], m8: byMarks[8], m9: byMarks[9], highMarks: high, legsWon: s.legsWon[mySide] };
   });
 }
 

@@ -59,7 +59,7 @@ function finishMatch(st) {
   const stats = ENGINES[a.type].stats(st, a.config);
   const rec = {
     id: a.id, type: a.type, date: a.started, ended: Date.now(), config: a.config, actions: a.actions,
-    players: a.config.players, stats,
+    players: a.config.players, stats, ...(st.tie ? { tie: true } : {}),
     ...(a.config.teams ? { winner: null, winners: (a.config.teams[st.winner] || []).map((i) => a.config.players[i].id) } : { winner: a.config.players[st.winner]?.id ?? null }),
   };
   update((s) => { s.matches = [rec, ...s.matches.filter((m) => m.id !== rec.id)]; s.active = null; });

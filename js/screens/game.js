@@ -7,7 +7,7 @@ import * as X01 from '../engines/x01.js';
 import * as CR from '../engines/cricket.js';
 import { atc as ATC, bobs as BOBS, checkout as CK, c121 as C121, doubles as DBL, shanghai as SHA } from '../engines/training.js';
 import { sideName, isTeamGame } from '../teams.js';
-import { isValidVisitScore, minCheckoutDarts, checkoutRoute, evaluateDarts, dartLabel } from '../darts.js';
+import { isValidVisitScore, minCheckoutDarts, checkoutRoute, evaluateDarts, dartLabel, isOneDartFinish } from '../darts.js';
 import { callScore, callRequire, speak } from '../voice.js';
 import { modeName } from './common.js';
 import { StatsTable } from './statstable.js';
@@ -80,7 +80,7 @@ function afterPush(a, ns) {
   if (ns.event?.type === 'bulloff' || ns.event?.type === 'bulloffTie') { snack(t(ns.event.type === 'bulloff' ? 'game.bulloffStart' : 'game.bulloffTie')); haptic(40); return; }
   if (ns.event) {
     const name = sideName(a.config, ns.event.side ?? ns.event.p);
-    if (ns.event.type === 'match') { confetti(); if (a.type !== 'x01') speak(t('game.matchWon', { name })); }
+    if (ns.event.type === 'match') { confetti(); if (a.type !== 'x01') speak(ns.tie ? t('result.draw') : t('game.matchWon', { name })); }
     else { snack(t(ns.event.type === 'set' ? 'game.setWon' : ns.event.bulloff ? 'game.bulloffWon' : 'game.legWon', { name })); haptic(40); }
   }
 }
@@ -171,10 +171,12 @@ function X01Game({ a }) {
       const askDbl = set.askDoubles && config.out !== 'straight';
       let res = { used: 3, dbl: 1 };
       if (minD < 3 || askDbl) { res = await checkoutDialog(minD, askDbl); if (!res) return; }
-      submit({ score, dartsUsed: res.used, dbl: askDbl ? res.dbl : 1 });
+      submit({ score, dartsUsed: res.used, dbl: askDbl ? res.dbl : 0 }); // not asked -> no double data (keeps checkout % honest)
     } else {
       let dbl = 0;
-      if (set.askDoubles && config.out !== 'straight' && before <= 50 && before >= 2 && s.opened[side]) {
+      // darts at a double were possible when starting on a finish, or when the visit ended on one (e.g. 81: T19 leaves 24, then D12 missed)
+      const couldDouble = before <= 50 || (before <= 170 && isOneDartFinish(after, config.out));
+      if (set.askDoubles && config.out !== 'straight' && couldDouble && before >= 2 && s.opened[side]) {
         const r = await doubleDialog(); if (r == null) return; dbl = r;
       }
       submit({ score, dbl });
@@ -477,14 +479,16 @@ function AtcGame({ a }) {
   const [locked, lock] = useLock();
   useEffect(() => setPending([]), [a.actions.length]);
   const cur = s.current;
-  const pos = s.pos[cur] + pending.filter(Boolean).length;
+  const stepOf = (h) => (h === true ? 1 : +h || 0);
+  const skip = !!config.skip && config.mode === 'any'; // double = 2 targets, treble = 3
+  const pos = Math.min(s.targets.length, s.pos[cur] + pending.reduce((a, h) => a + stepOf(h), 0));
   const tgt = s.targets[Math.min(pos, s.targets.length - 1)];
   const add = (hit) => {
     if (locked || pending.length >= 3) return;
     haptic(hit ? 20 : 8);
     const np = [...pending, hit];
     setPending(np);
-    const done = s.pos[cur] + np.filter(Boolean).length >= s.targets.length;
+    const done = s.pos[cur] + np.reduce((x, h) => x + stepOf(h), 0) >= s.targets.length;
     if (done || np.length === 3) lock(() => afterPush(a, pushAction({ hits: np })), 400);
   };
   return html`<div class="game">
@@ -496,10 +500,11 @@ function AtcGame({ a }) {
         ${config.players.length === 1 && html`<div class="card"><${Wavy} value=${pos} max=${s.targets.length} /><div class="row between body-m muted" style="margin-top:8px"><span>${pos}/${s.targets.length}</span><span>${t('stats.hitPct')}: ${s.darts[cur] ? Math.round((s.hits[cur] / s.darts[cur]) * 100) : 0}%</span></div></div>`}
       </div>
       <div class="input-panel">
-        <${DartSlots} darts=${pending} labels=${(h) => html`<${Icon} n=${h ? 'check' : 'close'} />`} />
+        <${DartSlots} darts=${pending} labels=${(h) => (skip && h ? ['', 'S', 'D', 'T'][stepOf(h)] : html`<${Icon} n=${h ? 'check' : 'close'} />`)} />
         <div class="hit-row">
           <button class="key big" onClick=${() => add(false)}><span class="row"><${Icon} n="close" /> ${t('game.miss')}</span></button>
-          <button class="key ok big" onClick=${() => add(true)}><span class="row"><${Icon} n="check" /> ${t('game.hit')}</span></button>
+          ${skip ? [1, 2, 3].map((k) => html`<button class=${'key ok big step' + k} disabled=${k > 1 && tgt === 25} onClick=${() => add(k)}>${[t('game.single'), t('game.double'), t('game.treble')][k - 1]}<small>+${k}</small></button>`)
+            : html`<button class="key ok big" onClick=${() => add(true)}><span class="row"><${Icon} n="check" /> ${t('game.hit')}</span></button>`}
         </div>
       </div>
     </div>
