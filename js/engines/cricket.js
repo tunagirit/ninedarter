@@ -56,7 +56,7 @@ export function compute(config, actions) {
 
 const closedAll = (s, side) => s.targets.every((x) => s.marks[side][x] >= 3);
 /** Rounds completed in the current leg. */
-export const roundsDone = (s) => Math.floor(s.visits.length / s.n);
+export const roundsDone = (s) => Math.floor(s.visits.filter((v) => !v.tap).length / s.n);
 
 function legWinner(s) {
   for (let side = 0; side < s.n; side++) {
@@ -157,6 +157,7 @@ function applyBullOff(s, config, a) {
 function applyVisit(s, config, a) {
   if (s.finished) return;
   if (s.bulloff) return applyBullOff(s, config, a);
+  if (a.tap) return applyTap(s, config, a.tap);
   if (!a.darts) return;
   const side = s.side, p = s.current;
   let marks = 0, used = 0, w = -1;
@@ -204,7 +205,19 @@ export function stats(s, config) {
   return config.players.map((_, p) => {
     const mySide = s.sides.findIndex((sd) => sd.includes(p));
     let marks = 0, darts = 0, rounds = 0, t = 0, high = 0;
-    for (const v of all) if (v.p === p) { marks += v.marks; darts += v.dartsUsed; rounds++; if (v.marks >= 5) t++; if (v.marks > high) high = v.marks; }
+    for (const v of all) if (v.p === p) { marks += v.marks; darts += v.dartsUsed; if (!v.tap) rounds++; if (v.marks >= 5) t++; if (v.marks > high) high = v.marks; }
     return { marks, darts, rounds, mpr: rounds ? marks / rounds : 0, fivePlus: t, highMarks: high, legsWon: s.legsWon[mySide] };
   });
+}
+
+/** v1.0.8a free scoreboard input: { tap: { s: side, n, m } } adds marks for any side at any time; turns do not move. */
+function applyTap(s, config, tp) {
+  if (s.finished || s.bulloff || !(tp.s >= 0 && tp.s < s.n)) return;
+  const side = tp.s, p = s.sides[side][0];
+  const d = { n: tp.n, m: tp.m || 1 };
+  const marks = applyDart(s, side, d);
+  s.visits.push({ p, s: side, darts: [d], marks, dartsUsed: 1, tap: true });
+  s.event = null;
+  const w = legWinner(s);
+  if (w >= 0) endLeg(s, config, w, s.sides[w][0]);
 }
