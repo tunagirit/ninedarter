@@ -261,7 +261,7 @@ export function Setup({ type, preset, picker, onPick, carry }) {
       <div class="card stack">
         ${picker && html`<div class="field game-pick-field"><span class="label-l">${t('setup.pickGame')}</span>
           <div class="game-pick">${PICK_MAIN.map((g) => html`<button class=${'gp-main ' + g.c + (picker === g.id ? ' on' : '')} onClick=${() => picker !== g.id && onPick(g.id)}>
-            <${Icon} n=${g.icon} size=${28} /><span class="title-m">${t('mode.' + g.id)}</span>${picker === g.id && html`<${Icon} n="check_circle" size=${20} />`}</button>`)}</div>
+            <${Icon} n=${g.icon} size=${28} /><span class="title-m">${g.id === 'x01' ? 'X01' : t('mode.' + g.id)}</span>${picker === g.id && html`<${Icon} n="check_circle" size=${20} />`}</button>`)}</div>
           <span class="label-m muted">${t('home.practice')}</span>
           <div class="chips">${PICK_PRACTICE.map((id) => html`<button class=${'chip' + (picker === id ? ' on' : '')} onClick=${() => picker !== id && onPick(id)}>${t('mode.' + id)}</button>`)}</div>
         </div>`}
