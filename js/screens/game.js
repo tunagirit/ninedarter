@@ -341,16 +341,29 @@ function CricketGame({ a }) {
   const bullOff = (v) => { if (isBot || locked) return; haptic(12); lock(() => afterPush(a, pushAction({ bull: v })), 120); };
   // v1.0.8: "board" input = tap the marks straight onto the scoreboard (numbers in the middle, players left/right)
   const set = useStore().settings;
-  const canBoard = s.mode !== 'fullboard' && !config.players.some((p) => p.bot); // free tapping has no turns, so no bots
+  const canBoard = s.mode !== 'fullboard';
   const boardMode = canBoard && set.cricketInput === 'board';
+  // no bots -> free tapping without turns; with bots -> tap your marks on your turn, then Enter
+  const freeTap = boardMode && !config.players.some((p) => p.bot);
+  // teams (free tapping): who gets the marks of each side, for the stats; tap a member avatar to switch
+  const [tapper, setTapper] = useState(() => s.sides.map(() => 0));
+  const pendRef = useRef(pending); pendRef.current = pending;
   const toggleInput = () => { haptic(10); setPending([]); setMult(1); update((x) => { x.settings.cricketInput = boardMode ? 'darts' : 'board'; }); };
   const tapCell = (i, x) => {
     if (!boardMode || bo || s.finished) return;
-    haptic(8);
     const d = { n: x, m: x === 25 ? Math.min(mult, 2) : mult };
-    setMult(1);
-    afterPush(a, pushAction({ tap: { s: i, n: x, m: d.m } }));
+    if (freeTap) {
+      haptic(8); setMult(1);
+      return afterPush(a, pushAction({ tap: { s: i, n: x, m: d.m, p: s.sides[i][tapper[i] % s.sides[i].length] } }));
+    }
+    if (i !== side || isBot || locked || pendRef.current.length >= 9) return;
+    haptic(8); setMult(1);
+    const np = [...pendRef.current, d];
+    pendRef.current = np;
+    setPending(np);
+    if (CR.preview(config, a.actions, np).legOver) lock(() => submit(np), 600);
   };
+  const submitBoard = () => lock(() => submit(pending.length ? pending : [{ n: 0, m: 1 }, { n: 0, m: 1 }, { n: 0, m: 1 }]), 10);
   const label = (d) => (d.n === 0 ? '–' : d.n === 25 ? (d.m === 2 ? 'RB' : 'B') : (d.m === 3 ? 'T' : d.m === 2 ? 'D' : '') + d.n + (d.bed ? '→' + (d.m === 3 ? 'T' : 'D') : ''));
   const n = s.n;
   const targets = s.targets;
@@ -364,7 +377,7 @@ function CricketGame({ a }) {
   const padNums = s.mode === 'fullboard' ? Array.from({ length: 20 }, (_, i) => i + 1) : targets.filter((x) => typeof x === 'number' && x !== 25).sort((p, q) => (targets.length <= 7 ? q - p : p - q));
   const hasBull = targets.includes(25) || targets.includes('H');
   const showPts = s.seq || s.scoring !== 'none';
-  const throwing = bo || boardMode ? '' : ` · ${t('game.throwing', { name: pl.name })}`;
+  const throwing = bo || freeTap ? '' : ` · ${t('game.throwing', { name: pl.name })}`;
   const round = Math.min(CR.roundsDone(s) + 1, config.rounds || Infinity);
   // keypad grid: the Enter key fills the rest of the last row
   const padCols = padNums.length > 6 ? 5 : 4;
@@ -374,7 +387,7 @@ function CricketGame({ a }) {
   if (altWide) goSpan = padCols - ((before + 1) % padCols);
   const legsLine = config.legsToWin > 1 ? ` · ${t('setup.firstTo')} ${config.legsToWin}` : '';
   const corner = html`<div class=${'cell corner' + (bo ? ' bo' : '')}>
-    ${boardMode ? html`<${Icon} n="touch_app" /><span>${t('game.freeTap')}</span>` : bo ? html`<${Icon} n="adjust" /><span>${t('game.bulloff')}</span>`
+    ${freeTap ? html`<${Icon} n="touch_app" /><span>${t('game.freeTap')}</span>` : bo ? html`<${Icon} n="adjust" /><span>${t('game.bulloff')}</span>`
       : html`<span>${t('game.round')}</span><b>${round}</b>${config.rounds ? html`<span>/ ${config.rounds}</span>` : null}`}
   </div>`;
 
@@ -386,11 +399,12 @@ function CricketGame({ a }) {
       <div class=${'cricket' + (compact ? ' compact' : '')}>
         <div class="crow headrow" style=${`grid-template-columns:${cols}`}>
           ${!mirror && corner}
-          ${s.sides.map((members, i) => html`${mirror && i === 1 && corner}<div class=${'cell head' + (i === side && !boardMode ? ' activecol' : '')}>${i === side && !boardMode && !s.finished && html`<span class="turn-dot"></span>`}
-            ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi) => html`<span class=${'tav' + (pi === cur && i === side ? ' on' : '')}><${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} /></span>`)}</div>`
+          ${s.sides.map((members, i) => html`${mirror && i === 1 && corner}<div class=${'cell head' + (i === side && !freeTap ? ' activecol' : '')}>${i === side && !freeTap && !s.finished && html`<span class="turn-dot"></span>`}
+            ${isTeamGame(config) ? html`<div class="row" style="gap:2px;justify-content:center">${members.map((pi, k) => html`<span class=${'tav' + ((freeTap ? k === tapper[i] % members.length : pi === cur && i === side) ? ' on' : '') + (freeTap ? ' pick' : '')} title=${freeTap ? config.players[pi].name : null} onClick=${freeTap ? () => { haptic(8); setTapper(tapper.map((v, j) => (j === i ? k : v))); } : null}><${Avatar} p=${config.players[pi]} spin=${pi === cur && config.players[pi].bot} /></span>`)}</div>`
               : html`<${Avatar} p=${config.players[members[0]]} spin=${i === side && config.players[members[0]].bot} />`}
             <span class="nm">${sideName(config, i)}</span>
-            ${i === side && !boardMode && !s.finished && html`<span class="thrower"><${Icon} n="sports_score" size=${14} /><span class="ellipsis">${pl.name}</span></span>`}
+            ${freeTap && isTeamGame(config) && html`<span class="thrower soft"><${Icon} n="edit" size=${13} /><span class="ellipsis">${config.players[members[tapper[i] % members.length]].name}</span></span>`}
+            ${i === side && !freeTap && !s.finished && html`<span class="thrower"><${Icon} n="sports_score" size=${14} /><span class="ellipsis">${pl.name}</span></span>`}
             ${bo ? html`<span class="pts bo">${i in bo.throws ? bullValLabel(bo.throws[i]) : bo.order.includes(i) ? '…' : '–'}</span>`
               : showPts && html`<span class="pts">${s.seq ? `${targets.filter((x) => view.marks[i][x] >= 3).length}/${targets.length}` : view.points[i]}</span>`}
             <span class="legs-won" title=${t('stats.legsWon')}>${t('game.legsWon')} <b>${s.legsWon[i]}</b></span>
@@ -400,7 +414,7 @@ function CricketGame({ a }) {
           const num = html`<div class=${'cell num' + (typeof x === 'string' || x === 25 ? ' txt' : '') + (s.seq && x === CR.nextTarget(view, side) ? ' next' : '')}>${keyLabel(x)}</div>`;
           return html`<div class=${'crow' + (dead(x) ? ' dead' : '')} style=${`grid-template-columns:${cols}`}>
           ${!mirror && num}
-          ${s.sides.map((_, i) => html`${mirror && i === 1 && num}<div class=${'cell' + (i === side && !boardMode ? ' activecol' : '') + (closedBy(i, x) ? ' closed' : '') + (boardMode && !bo ? ' tap' : '')}
+          ${s.sides.map((_, i) => html`${mirror && i === 1 && num}<div class=${'cell' + (i === side && !freeTap ? ' activecol' : '') + (closedBy(i, x) ? ' closed' : '') + (boardMode && !bo && (freeTap || (i === side && !isBot)) ? ' tap' : '')}
             onClick=${boardMode ? () => tapCell(i, x) : null}><${Mark} n=${view.marks[i][x]} /></div>`)}
         </div>`; })}
       </div>
@@ -413,8 +427,16 @@ function CricketGame({ a }) {
             <button class="b" onClick=${() => bullOff(25)}>Bull</button>
             <button class="b red" onClick=${() => bullOff(50)}>${t('game.redBull')}</button>
           </div>`
+        : boardMode && !freeTap ? html`
+        <div class="board-taps">${pending.length ? pending.map((d) => html`<span class="tapchip">${label(d)}</span>`) : html`<span class="body-s muted">${t('game.tapHint', { name: pl.name })}</span>`}</div>
+        <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
+        <div class="dartpad board-pad">
+          <button class="alt" onClick=${() => setPending(pending.slice(0, -1))} disabled=${!pending.length}><${Icon} n="backspace" /></button>
+          <button class=${'go' + (pending.length ? '' : ' miss')} onClick=${submitBoard}>
+            <${Icon} n=${pending.length ? 'keyboard_return' : 'block'} /> ${pending.length ? t('game.enter') : t('game.missTurn')}</button>
+        </div>`
         : boardMode ? html`
-        <div class="board-taps"><span class="body-s muted">${t('game.tapHintFree')}</span></div>
+        <div class="board-taps"><span class="body-s muted">${t(isTeamGame(config) ? 'game.tapHintTeams' : 'game.tapHintFree')}</span></div>
         <div class="board-free">
           <${Seg} value=${mult} onChange=${setMult} options=${[{ value: 1, label: t('game.single') }, { value: 2, label: t('game.double') }, { value: 3, label: t('game.treble') }]} />
           <button class="key alt board-undo" onClick=${() => { haptic(15); if (undo()) snack(t('game.undoneTap')); }} disabled=${!a.actions.length} aria-label=${t('game.undo')}><${Icon} n="undo" /></button>

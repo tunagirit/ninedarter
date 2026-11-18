@@ -920,3 +920,6 @@ html.locked .game { touch-action: pan-x pan-y; }
 .board-free { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: stretch; }
 .board-free .board-undo { height: auto; min-height: 48px; width: 72px; }
 .cricket-board-mode .board-taps { text-align: center; }
+/* v1.0.8b — teams in free tapping: pick who gets the marks */
+.cricket .head .tav.pick { cursor: pointer; }
+.cricket .head .thrower.soft { background: var(--secondary-container); color: var(--on-secondary-container); }

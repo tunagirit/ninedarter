@@ -120,7 +120,7 @@ const tr = {
   // v1.0.8
   'game.inputPad': 'Tuş takımıyla gir', 'game.inputBoard': 'Tahtaya tıklayarak gir', 'game.tapHint': '{name}: işaretlemek için kendi sütunundaki kutulara dokun',
   // v1.0.8a
-  'game.freeTap': 'Serbest', 'game.tapHintFree': 'Sıra yok: işaretlemek için oyuncunun sütunundaki kutuya dokun. Double/Triple seçip dokunursan 2/3 işaret yazar.', 'game.undoneTap': 'Son işaret geri alındı',
+  'game.freeTap': 'Serbest', 'game.tapHintTeams': 'Sıra yok: takımın sütunundaki kutuya dokun. İşaretin kime yazılacağını seçmek için takım başlığındaki oyuncuya dokun.', 'game.tapHintFree': 'Sıra yok: işaretlemek için oyuncunun sütunundaki kutuya dokun. Double/Triple seçip dokunursan 2/3 işaret yazar.', 'game.undoneTap': 'Son işaret geri alındı',
 };
 
 const en = {
@@ -243,7 +243,7 @@ const en = {
   // v1.0.8
   'game.inputPad': 'Enter with the keypad', 'game.inputBoard': 'Tap the scoreboard', 'game.tapHint': '{name}: tap the boxes in your column to add marks',
   // v1.0.8a
-  'game.freeTap': 'Free', 'game.tapHintFree': 'No turns: tap a box in a player\'s column to add a mark. Pick Double/Triple first to add 2/3 marks.', 'game.undoneTap': 'Last mark undone',
+  'game.freeTap': 'Free', 'game.tapHintTeams': 'No turns: tap a box in the team column. Tap a player in the team header to choose who gets the marks.', 'game.tapHintFree': 'No turns: tap a box in a player\'s column to add a mark. Pick Double/Triple first to add 2/3 marks.', 'game.undoneTap': 'Last mark undone',
 };
 
 const DICTS = { tr, en };

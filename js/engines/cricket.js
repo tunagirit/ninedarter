@@ -213,7 +213,7 @@ export function stats(s, config) {
 /** v1.0.8a free scoreboard input: { tap: { s: side, n, m } } adds marks for any side at any time; turns do not move. */
 function applyTap(s, config, tp) {
   if (s.finished || s.bulloff || !(tp.s >= 0 && tp.s < s.n)) return;
-  const side = tp.s, p = s.sides[side][0];
+  const side = tp.s, p = s.sides[side].includes(tp.p) ? tp.p : s.sides[side][0];
   const d = { n: tp.n, m: tp.m || 1 };
   const marks = applyDart(s, side, d);
   s.visits.push({ p, s: side, darts: [d], marks, dartsUsed: 1, tap: true });
