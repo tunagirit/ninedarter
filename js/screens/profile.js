@@ -254,44 +254,67 @@ export function Profile({ tab: tab0, pid } = {}) {
     return html`<${Inner} />`;
   });
   const c = st.cloud || {};
+  const wide = useWide();
+  // wide screens: friends on the left, my stats/history in the middle, my profile on the right
+  const tabs = [{ value: 'stats', label: t('nav.stats'), icon: 'monitoring' }, { value: 'history', label: t('nav.history'), icon: 'history' }, ...(wide ? [] : [{ value: 'account', label: t('profile.accountTab'), icon: 'group' }])];
+  const cur = wide && tab === 'account' ? 'stats' : tab;
 
-  return html`<div class="screen-enter stack">
+  const meCard = html`<section class="me-card">
+    <div class="me-top">
+      <div class="avatar-edit">
+        <${Avatar} p=${me} size="xl" />
+        <button class="btn icon-btn filled s cam" title=${t('profile.changePhoto')} onClick=${() => fileRef.current.click()}><${Icon} n="photo_camera" size=${18} /></button>
+        <input type="file" accept="image/*" ref=${fileRef} hidden onChange=${pickPhoto} />
+      </div>
+      <div class="me-id">
+        ${nameEdit != null ? html`<div class="row" style="gap:6px">
+            <input class="textfield" value=${nameEdit} maxlength="24" placeholder=${acc ? acc.username : t('players.name')} onInput=${(e) => setNameEdit(e.target.value)} onKeyDown=${(e) => e.key === 'Enter' && saveName()} />
+            <${IconBtn} icon="check" kind="filled" title=${t('common.save')} onClick=${saveName} /></div>`
+          : html`<button class="name-btn" onClick=${() => setNameEdit(acc ? acc.displayName || '' : st.profile.name || '')}><span class="headline-s">${me.name}</span><${Icon} n="edit" size=${18} /></button>`}
+        ${acc ? html`<div class="me-meta"><span>@${acc.username}</span><span class="badge win"><${Icon} n="verified" size=${13} /> ${t('profile.online')}</span></div>`
+          : html`<div class="me-meta"><span class="badge"><${Icon} n="cloud_off" size=${13} /> ${t('profile.offline')}</span></div>`}
+        ${acc && html`<div class="me-mail ellipsis">${acc.email}</div>`}
+      </div>
+    </div>
+    <div class="me-actions">
+      <button class="country-btn" onClick=${pickCountry}>${me.country ? html`<${Flag} code=${me.country} /><span>${countryName(me.country, st.settings.lang)}</span>` : html`<${Icon} n="flag" size=${18} /><span>${t('profile.pickCountry')}</span>`}<${Icon} n="expand_more" size=${18} /></button>
+      ${me.photo && html`<${Btn} kind="text" size="s" icon="hide_image" onClick=${removePhoto}>${t('profile.removePhoto')}<//>`}
+    </div>
+  </section>`;
+
+  const accountList = acc && html`<div class="list">
+    <div class="setting"><${Icon} n="sync" /><div class="grow"><div class="title-s">${t('profile.sync')}</div><div class="body-s muted">${c.lastSync ? t('profile.lastSync', { t: new Date(c.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }) : '–'}${c.lastError ? ' · ' + t('auth.err.network') : ''}</div></div>
+      <${Btn} kind="tonal" size="s" disabled=${c.syncing} onClick=${() => cloud.syncAll().then(() => snack(t('profile.synced')))}>${t('profile.syncNow')}<//></div>
+    <div class="setting"><${Icon} n="alternate_email" /><div class="grow"><div class="title-s">${t('auth.username')}</div><div class="body-s muted">@${acc.username} · ${t('profile.usernameSub')}</div></div><${Btn} kind="tonal" size="s" onClick=${changeUsernameDialog}>${t('common.edit')}<//></div>
+    <div class="setting"><${Icon} n="password" /><div class="grow title-s">${t('profile.changePw')}</div><${Btn} kind="tonal" size="s" onClick=${() => newPasswordDialog()}>${t('common.edit')}<//></div>
+    <div class="setting"><${Icon} n="logout" /><div class="grow title-s">${t('profile.signOut')}</div><${Btn} kind="danger" size="s" onClick=${async () => { if (await confirmDialog({ title: t('profile.signOutQ'), text: t('profile.signOutText'), ok: t('profile.signOut'), cancel: t('common.cancel') })) { await cloud.signOut(); snack(t('profile.signedOut')); } }}>${t('profile.signOut')}<//></div>
+  </div>`;
+  // friends (or sign-in) panel; friends open their own page with their stats
+  const social = !cloud.cloudEnabled() ? html`<div class="card row"><${Icon} n="cloud_off" /><div class="grow body-m">${t('profile.noCloud')}</div></div>`
+    : acc ? html`<${Friends} />` : html`<${AuthCard} />`;
+
+  const main = html`<div class="pl-main stack">
+    <${Seg} value=${cur} onChange=${(v) => { setTab(v); if (v !== 'stats' && location.hash.startsWith('#/stats')) history.replaceState(null, '', '#/profile'); }} options=${tabs} />
+    ${cur === 'stats' ? html`<${Stats} embedded mine pid=${pid || me.id} />` : cur === 'history' ? html`<${History} embedded />` : html`${social}${accountList}`}
+  </div>`;
+
+  return html`<div class="screen-enter stack profile-screen">
     <${TopBar} title=${t('nav.profile')} back=${false}>
       ${acc && html`<${IconBtn} icon=${c.syncing ? 'sync' : 'cloud_done'} title=${t('profile.sync')} onClick=${() => cloud.syncAll().then(() => snack(t('profile.synced')))} />`}
     <//>
-
-    <section class="profile-hero">
-      <div class="avatar-edit">
-        <${Avatar} p=${me} size="xxl" />
-        <button class="btn icon-btn filled m cam" title=${t('profile.changePhoto')} onClick=${() => fileRef.current.click()}><${Icon} n="photo_camera" /></button>
-        <input type="file" accept="image/*" ref=${fileRef} hidden onChange=${pickPhoto} />
-      </div>
-      ${nameEdit != null ? html`<div class="row" style="gap:8px;width:min(320px,100%)">
-          <input class="textfield" value=${nameEdit} maxlength="24" placeholder=${acc ? acc.username : t('players.name')} onInput=${(e) => setNameEdit(e.target.value)} onKeyDown=${(e) => e.key === 'Enter' && saveName()} />
-          <${IconBtn} icon="check" kind="filled" title=${t('common.save')} onClick=${saveName} /></div>`
-        : html`<button class="name-btn" onClick=${() => setNameEdit(acc ? acc.displayName || '' : st.profile.name || '')}><span class="display-s">${me.name}</span><${Icon} n="edit" size=${20} /></button>`}
-      <div class="row wrap" style="justify-content:center;gap:8px">
-        ${acc ? html`<span class="body-m">@${acc.username}</span><span class="badge win"><${Icon} n="verified" size=${14} /> ${t('profile.online')}</span><span class="body-m">${acc.email}</span>`
-          : html`<span class="badge"><${Icon} n="cloud_off" size=${14} /> ${t('profile.offline')}</span>`}
-      </div>
-      <button class="country-btn" onClick=${pickCountry}>${me.country ? html`<${Flag} code=${me.country} /><span>${countryName(me.country, st.settings.lang)}</span>` : html`<${Icon} n="flag" size=${18} /><span>${t('profile.pickCountry')}</span>`}<${Icon} n="expand_more" size=${18} /></button>
-      ${me.photo && html`<${Btn} kind="text" size="s" icon="hide_image" onClick=${removePhoto}>${t('profile.removePhoto')}<//>`}
-    </section>
-
-    <!-- v1.0.7: Profile and Stats are one screen with two tabs -->
-    <${Seg} value=${tab} onChange=${(v) => { setTab(v); if (v !== 'stats' && location.hash.startsWith('#/stats')) history.replaceState(null, '', '#/profile'); }}
-      options=${[{ value: 'stats', label: t('nav.stats'), icon: 'monitoring' }, { value: 'history', label: t('nav.history'), icon: 'history' }, { value: 'account', label: t('profile.accountTab'), icon: 'group' }]} />
-
-    ${tab === 'stats' ? html`<${Stats} embedded pid=${pid || me.id} />` : tab === 'history' ? html`<${History} embedded />`
-      : !cloud.cloudEnabled() ? html`<div class="card row"><${Icon} n="cloud_off" /><div class="grow body-m">${t('profile.noCloud')}</div></div>`
-      : acc ? html`
-        <${Friends} />
-        <div class="list">
-          <div class="setting"><${Icon} n="sync" /><div class="grow"><div class="title-s">${t('profile.sync')}</div><div class="body-s muted">${c.lastSync ? t('profile.lastSync', { t: new Date(c.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }) : '–'}${c.lastError ? ' · ' + t('auth.err.network') : ''}</div></div>
-            <${Btn} kind="tonal" size="s" disabled=${c.syncing} onClick=${() => cloud.syncAll().then(() => snack(t('profile.synced')))}>${t('profile.syncNow')}<//></div>
-          <div class="setting"><${Icon} n="alternate_email" /><div class="grow"><div class="title-s">${t('auth.username')}</div><div class="body-s muted">@${acc.username} · ${t('profile.usernameSub')}</div></div><${Btn} kind="tonal" size="s" onClick=${changeUsernameDialog}>${t('common.edit')}<//></div>
-          <div class="setting"><${Icon} n="password" /><div class="grow title-s">${t('profile.changePw')}</div><${Btn} kind="tonal" size="s" onClick=${() => newPasswordDialog()}>${t('common.edit')}<//></div>
-          <div class="setting"><${Icon} n="logout" /><div class="grow title-s">${t('profile.signOut')}</div><${Btn} kind="danger" size="s" onClick=${async () => { if (await confirmDialog({ title: t('profile.signOutQ'), text: t('profile.signOutText'), ok: t('profile.signOut'), cancel: t('common.cancel') })) { await cloud.signOut(); snack(t('profile.signedOut')); } }}>${t('profile.signOut')}<//></div>
-        </div>` : html`<${AuthCard} />`}
+    ${wide ? html`<div class="profile-layout">
+        <aside class="pl-side pl-friends stack">${social}</aside>
+        ${main}
+        <aside class="pl-side pl-me stack">${meCard}${accountList}</aside>
+      </div>`
+      : html`${meCard}${main}`}
   </div>`;
+}
+
+/** true on wide screens (three-column profile). */
+function useWide(q = '(min-width: 1180px)') {
+  const mq = typeof matchMedia === 'function' ? matchMedia(q) : null;
+  const [w, setW] = useState(!!mq?.matches);
+  useEffect(() => { if (!mq) return; const on = () => setW(mq.matches); mq.addEventListener?.('change', on); return () => mq.removeEventListener?.('change', on); }, []);
+  return w;
 }
