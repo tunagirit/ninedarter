@@ -13,7 +13,7 @@ import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.1.3a';
+export const VERSION = '1.1.3b';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;

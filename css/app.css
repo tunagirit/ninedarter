@@ -1066,3 +1066,4 @@ html.locked .game { touch-action: pan-x pan-y; }
 .pl-me .setting .title-s, .pl-me .setting .body-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pl-me .setting > .msr { font-size: 20px; }
 .me-card .me-top { gap: 12px; }
+.bull-chip .bc-edit { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; opacity: 0.75; }

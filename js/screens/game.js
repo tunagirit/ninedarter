@@ -402,7 +402,9 @@ function CricketGame({ a }) {
   const n = s.n;
   const targets = s.targets;
   const closedBy = (i, x) => view.marks[i][x] >= 3;
+  // keys: dim what the thrower no longer needs (Akyaka: their own closed targets); rows: strike only when every side closed it
   const dead = (x) => (s.seq ? closedBy(side, x) : x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
+  const rowDead = (x) => (x in view.marks[0] ? view.marks.every((m) => m[x] >= 3) : false);
   const inactive = (x) => s.mode === 'fullboard' && !(x in view.marks[0]);
   // board mode with two sides: player | number | player
   const mirror = boardMode && n === 2;
@@ -445,7 +447,7 @@ function CricketGame({ a }) {
         </div>
         ${targets.map((x) => {
           const num = html`<div class=${'cell num' + (typeof x === 'string' || x === 25 ? ' txt' : '') + (s.seq && x === CR.nextTarget(view, side) ? ' next' : '')}>${keyLabel(x)}</div>`;
-          return html`<div class=${'crow' + (dead(x) ? ' dead' : '')} style=${`grid-template-columns:${cols}`}>
+          return html`<div class=${'crow' + (rowDead(x) ? ' dead' : '')} style=${`grid-template-columns:${cols}`}>
           ${!mirror && num}
           ${s.sides.map((_, i) => html`${mirror && i === 1 && num}<div class=${'cell' + (i === side && !freeTap ? ' activecol' : '') + (closedBy(i, x) ? ' closed' : '') + (boardMode && !bo && (freeTap || (i === side && !isBot)) ? ' tap' : '')}
             onClick=${boardMode ? () => tapCell(i, x) : null}><${Mark} n=${view.marks[i][x]} /></div>`)}

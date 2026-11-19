@@ -124,6 +124,7 @@ function bullOff(sides) {
       const [marks, setMarks] = useState(sides.map(() => null)); // {x, y} in mm (svg coords, y down)
       const [active, setActive] = useState(0);
       const [picking, setPicking] = useState(null); // side whose thrower is being changed
+      const [editing, setEditing] = useState(null); // side whose dart is being moved (chosen by tapping its chip)
       const press = useRef(null);
       const player = (i) => sides[i].members[reps[i]];
       const dist = (m) => (m ? Math.hypot(m.x, m.y) : null);
@@ -131,9 +132,12 @@ function bullOff(sides) {
 
       const mark = (x, y) => {
         if (picking != null) return;
+        // a dart that is already on the board only moves after its player was tapped (edit)
+        if (marks[active] && editing !== active) return;
         haptic(15);
         const ms = marks.map((m, i) => (i === active ? { x, y } : m));
         setMarks(ms);
+        setEditing(null);
         setActive(nextOpen(ms, active));
       };
       // bots throw their own dart at the bull
@@ -150,19 +154,20 @@ function bullOff(sides) {
       const winners = done ? ds.map((d, i) => (Math.abs(d - best) < 0.05 ? i : -1)).filter((i) => i >= 0) : [];
       const winner = winners.length === 1 ? winners[0] : null;
       useEffect(() => { if (winner != null) { haptic(40); confetti(); } }, [winner]);
-      const retie = () => { setMarks(marks.map((m, i) => (winners.includes(i) ? null : m))); setActive(winners[0]); };
+      const retie = () => { setMarks(marks.map((m, i) => (winners.includes(i) ? null : m))); setActive(winners[0]); setEditing(null); };
 
       // long press a player to choose another member of that side
       const down = (i) => { press.current = setTimeout(() => { press.current = 'long'; if (sides[i].members.length > 1) { haptic(25); setPicking(i); } }, 450); };
-      const up = (i) => { const long = press.current === 'long'; clearTimeout(press.current); press.current = null; if (!long) { setPicking(null); setActive(i); haptic(8); } };
+      const up = (i) => { const long = press.current === 'long'; clearTimeout(press.current); press.current = null; if (!long) { setPicking(null); setActive(i); setEditing(marks[i] ? (editing === i ? null : i) : null); haptic(8); } };
 
       const chip = (i) => {
         const p = player(i), d = ds[i];
-        return html`<button class=${'bull-chip' + (i === active && !done ? ' on' : '') + (winner === i ? ' win' : '')}
+        return html`<button class=${'bull-chip' + ((i === active && !done) || editing === i ? ' on' : '') + (winner === i && editing == null ? ' win' : '')}
             onPointerDown=${() => down(i)} onPointerUp=${() => up(i)} onPointerLeave=${() => { if (press.current && press.current !== 'long') clearTimeout(press.current); }} onContextMenu=${(e) => e.preventDefault()}>
           <${Avatar} p=${p} />
           <span class="bc-text"><span class="bc-name ellipsis">${p.name}</span>${sides[i].name !== p.name && html`<span class="bc-side ellipsis">${sides[i].name}</span>`}</span>
-          <span class="bc-dist">${d == null ? (i === active ? t('start.tapBoard') : '–') : `${d.toFixed(1)} mm`}</span>
+          <span class="bc-dist">${d == null ? (i === active ? t('start.tapBoard') : '–') : d <= R.bull ? t('game.redBull') : d <= R.outerBull ? t('start.singleBull') : `${d.toFixed(1)} mm`}</span>
+          ${d != null && html`<span class="bc-edit">${editing === i ? t('start.tapToMove') : html`<${Icon} n="edit" size=${13} /> ${t('start.edit')}`}</span>`}
         </button>`;
       };
       const teamGame = sides.some((sd) => sd.members.length > 1);
