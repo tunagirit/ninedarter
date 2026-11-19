@@ -1022,3 +1022,47 @@ html.locked .game { touch-action: pan-x pan-y; }
 .pl-friends .tf-wrap { min-width: 0; }
 /* phones and tablets: compact profile card on top, friends in their own tab */
 @media (max-width: 1179px) { .profile-screen .me-card { padding: 14px; } }
+
+/* ===== v1.1.3a — balanced profile ===== */
+/* equal side columns, one gap and one corner radius everywhere */
+.profile-layout { grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 16px; }
+.profile-layout .card, .profile-layout .me-card { border-radius: var(--r-xl); }
+/* stats: 4 even columns, values sized to the tile so nothing clips */
+.profile-screen .stat-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.profile-screen .tile { min-height: 92px; padding: 14px; justify-content: space-between; border-radius: var(--r-l); min-width: 0; }
+.profile-screen .tile .k { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-screen .tile .v { font-size: clamp(20px, 2.2vw, 30px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-screen .tile.hero-tile { grid-column: span 2; border-radius: var(--r-l); }
+.profile-screen .tile.hero-tile .v { font-size: clamp(30px, 3.4vw, 46px); }
+@media (max-width: 640px) { .profile-screen .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .profile-screen .tile .v { font-size: 24px; } .profile-screen .tile.hero-tile .v { font-size: 40px; } }
+.profile-screen .card:has(.chart) { border-radius: var(--r-l); }
+/* friends: full-width search with a round add button */
+.pl-friends .row:has(.tf-wrap), .profile-screen .row:has(.tf-wrap) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.pl-friends .row:has(.tf-wrap) > .btn { width: 56px; padding: 0; justify-content: center; font-size: 0; gap: 0; }
+.pl-friends .row:has(.tf-wrap) > .btn .msr { font-size: 24px; }
+.pl-friends .list-item { padding: 10px 8px; gap: 12px; }
+.pl-friends .list-item .title-m { font-size: 15px; }
+/* profile card: smaller photo, everything on one rhythm */
+.me-card { gap: 10px; padding: 14px; }
+.me-card .avatar.xl { width: 72px; height: 72px; font-size: 28px; }
+.me-card .avatar-edit .cam { --bh: 30px; }
+.me-card .avatar-edit .cam .msr { font-size: 16px; }
+.me-card .name-btn .headline-s { font-size: 20px; }
+.me-card .me-actions { justify-content: space-between; }
+.me-card .me-actions .btn.text { padding: 0 8px; }
+/* account settings under the card: compact rows matching the friends list */
+.pl-me .setting { padding: 10px 12px; gap: 12px; }
+.pl-me .setting .title-s { font-size: 14px; }
+.pl-me .setting .body-s { font-size: 12px; }
+.pl-me .setting .btn.s { --bh: 34px; padding: 0 12px; font-size: 13px; }
+/* values scale with their own tile (no clipping); tiles wrap instead of squeezing */
+.profile-layout { grid-template-columns: 264px minmax(0, 1fr) 264px; }
+.profile-screen .stat-tiles { grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); }
+.profile-screen .tile { container-type: inline-size; }
+.profile-screen .tile .v { overflow: visible; text-overflow: clip; font-size: clamp(18px, 22cqi, 30px); }
+.profile-screen .tile.hero-tile .v { font-size: clamp(28px, 20cqi, 46px); }
+.profile-screen .tile .k { white-space: normal; overflow: visible; line-height: 1.25; }
+.pl-me .setting .grow { min-width: 0; }
+.pl-me .setting .title-s, .pl-me .setting .body-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-me .setting > .msr { font-size: 20px; }
+.me-card .me-top { gap: 12px; }
