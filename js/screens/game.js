@@ -1,7 +1,7 @@
 import { html, useState, useEffect, useMemo, useRef } from '../../vendor/preact-htm.js';
 import { useStore, update } from '../store.js';
 import { t } from '../i18n.js';
-import { Icon, IconBtn, Btn, Seg, Avatar, Wavy, Shape, openDialog, snack, haptic, confetti, fmt1 } from '../ui.js';
+import { Icon, IconBtn, Btn, Seg, Switch, Avatar, Wavy, Shape, openDialog, snack, haptic, confetti, fmt1 } from '../ui.js';
 import { pushAction, undo, go, abandonMatch } from '../match.js';
 import * as X01 from '../engines/x01.js';
 import * as CR from '../engines/cricket.js';
@@ -42,13 +42,44 @@ async function exitDialog() {
   if (r === 'abandon') { abandonMatch(); go('#/'); }
 }
 
-function GameTop({ a, sub, children }) {
+function GameTop({ a, sub, children, menu = {} }) {
   return html`<div class="game-top">
     <${IconBtn} icon="close" title=${t('common.close')} onClick=${exitDialog} />
     <div class="info"><div class="title-m">${modeName(a.type, a.config)}</div>${sub && html`<div class="body-s muted">${sub}</div>`}</div>
     <${IconBtn} icon="undo" title=${t('game.undo')} disabled=${!a.actions.length} onClick=${() => { haptic(15); if (undo()) snack(t('game.undone')); }} />
     ${children}
+    <${IconBtn} icon="tune" title=${t('game.settings')} onClick=${() => gameSettingsDialog(a, menu)} />
   </div>`;
+}
+
+/** v1.1.1 in-game quick settings: caller, vibration, input mode and the game's own options. */
+function gameSettingsDialog(a, menu) {
+  const hasBots = a.config.players.some((p) => p.bot);
+  return openDialog((close) => {
+    const Inner = () => {
+      const s = useStore().settings;
+      const set = (k, v) => update((x) => { x.settings[k] = v; });
+      const callerLevel = s.caller === false ? 'off' : s.callerLevel || 'all';
+      const row = (icon, title, sub, control) => html`<div class="gs-row"><${Icon} n=${icon} /><div class="grow"><div class="title-s">${title}</div>${sub && html`<div class="body-s muted">${sub}</div>`}</div>${control}</div>`;
+      return html`<div class="row between"><div class="headline-s">${t('game.settings')}</div><${IconBtn} icon="close" title=${t('common.close')} onClick=${() => close()} /></div>
+        <div class="field"><span class="label-l"><${Icon} n="record_voice_over" size=${18} /> ${t('settings.caller')}</span>
+          <${Seg} value=${callerLevel} onChange=${(v) => update((x) => { x.settings.caller = v !== 'off'; if (v !== 'off') x.settings.callerLevel = v; })}
+            options=${[{ value: 'all', label: t('gs.callAll') }, { value: 'big', label: t('gs.callBig') }, { value: 'off', label: t('gs.callOff') }]} />
+          <span class="body-s muted">${t(callerLevel === 'big' ? 'gs.callBigSub' : callerLevel === 'off' ? 'gs.callOffSub' : 'gs.callAllSub')}</span></div>
+        ${menu.kind === 'x01' && html`<div class="field"><span class="label-l"><${Icon} n="dialpad" size=${18} /> ${t('game.inputMode')}</span>
+          <${Seg} value=${s.inputMode} onChange=${(v) => set('inputMode', v)} options=${[{ value: 'keypad', label: t('settings.keypad') }, { value: 'darts', label: t('settings.perDart') }]} /></div>`}
+        ${menu.kind === 'cricket' && menu.canBoard && html`<div class="field"><span class="label-l"><${Icon} n="touch_app" size=${18} /> ${t('game.inputMode')}</span>
+          <${Seg} value=${s.cricketInput === 'board' ? 'board' : 'darts'} onChange=${(v) => set('cricketInput', v)} options=${[{ value: 'darts', label: t('gs.inputPad') }, { value: 'board', label: t('gs.inputBoard') }]} /></div>`}
+        <div class="list">
+          ${row('vibration', t('settings.vibrate'), null, html`<${Switch} checked=${s.vibrate} onChange=${(v) => set('vibrate', v)} label=${t('settings.vibrate')} />`)}
+          ${menu.kind === 'x01' && row('lightbulb', t('settings.hints'), t('settings.hintsSub'), html`<${Switch} checked=${s.hints} onChange=${(v) => set('hints', v)} label=${t('settings.hints')} />`)}
+          ${menu.kind === 'x01' && row('ads_click', t('settings.askDoubles'), t('settings.askDoublesSub'), html`<${Switch} checked=${s.askDoubles} onChange=${(v) => set('askDoubles', v)} label=${t('settings.askDoubles')} />`)}
+        </div>
+        ${hasBots && html`<div class="field"><span class="label-l"><${Icon} n="speed" size=${18} /> ${t('settings.botSpeed')}</span>
+          <${Seg} size="s" value=${s.botSpeed} onChange=${(v) => set('botSpeed', v)} options=${[{ value: 1600, label: t('settings.slow') }, { value: 900, label: t('settings.normal') }, { value: 300, label: t('settings.fast') }]} /></div>`}`;
+    };
+    return html`<${Inner} />`;
+  });
 }
 
 function useBot(a, s, makeAction) {
@@ -154,6 +185,7 @@ function X01Game({ a }) {
 
   useBot(a, s, () => X01.botAction(s, config));
   useEffect(() => { setPending([]); setEntry(''); setMult(1); }, [a.actions.length]);
+  useEffect(() => { if (set.inputMode !== mode) { setMode(set.inputMode); setPending([]); setEntry(''); setMult(1); } }, [set.inputMode]);
 
   const fail = () => { setErr(true); haptic(60); setTimeout(() => setErr(false), 400); };
   const submit = (action) => afterPush(a, pushAction(action));
@@ -226,9 +258,8 @@ function X01Game({ a }) {
   const many = s.n > 2;
 
   return html`<div class="game">
-    <${GameTop} a=${a} sub=${sub}>
+    <${GameTop} a=${a} sub=${sub} menu=${{ kind: 'x01' }}>
       <${IconBtn} icon="leaderboard" title=${t('game.liveStats')} onClick=${() => openDialog((close) => html`<div class="headline-s">${t('game.liveStats')}</div><${StatsTable} type="x01" players=${config.players} stats=${mstats} /><div class="actions"><${Btn} kind="filled" onClick=${() => close()}>${t('common.close')}<//></div>`)} />
-      <${IconBtn} icon=${mode === 'keypad' ? 'target' : 'dialpad'} title=${t('game.inputMode')} onClick=${() => { const m = mode === 'keypad' ? 'darts' : 'keypad'; setMode(m); setPending([]); setEntry(''); update((x) => { x.settings.inputMode = m; }); }} />
     <//>
     <div class="game-body">
       <div class=${'players' + (many ? ' many' : '')}>
@@ -350,6 +381,7 @@ function CricketGame({ a }) {
   // teams (free tapping): who gets the marks of each side, for the stats; tap a member avatar to switch
   const [tapper, setTapper] = useState(() => s.sides.map(() => 0));
   const pendRef = useRef(pending); pendRef.current = pending;
+  useEffect(() => { setPending([]); setMult(1); }, [set.cricketInput]);
   const toggleInput = () => { haptic(10); setPending([]); setMult(1); update((x) => { x.settings.cricketInput = boardMode ? 'darts' : 'board'; }); };
   const tapCell = (i, x) => {
     if (!boardMode || bo || s.finished) return;
@@ -394,8 +426,7 @@ function CricketGame({ a }) {
   </div>`;
 
   return html`<div class=${'game' + (boardMode ? ' cricket-board-mode' : '')}>
-    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg}${legsLine}${throwing}`}>
-      ${canBoard && html`<${IconBtn} icon=${boardMode ? 'dialpad' : 'touch_app'} title=${t(boardMode ? 'game.inputPad' : 'game.inputBoard')} onClick=${toggleInput} />`}
+    <${GameTop} a=${a} sub=${`${t('game.leg')} ${s.leg}${legsLine}${throwing}`} menu=${{ kind: 'cricket', canBoard }}>
     <//>
     <div class="game-body">
       <div class=${'cricket' + (compact ? ' compact' : '')}>

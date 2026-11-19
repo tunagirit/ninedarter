@@ -129,6 +129,8 @@ const tr = {
   'setup.atcSkip': 'Double/Triple ileri atlatır', 'setup.atcSkipSub': 'Single 1, double 2, triple 3 hedef ilerletir',
   'setup.outAtZero': '0\'da oyun biter', 'setup.outAtZeroSub': 'Puan 0 veya altına düşünce elenirsin (kapalıysa yalnızca 0\'ın altında)',
   'setup.failRule': 'Bitiremezsen', 'setup.failDown': 'Bir aşağı in', 'setup.failStart': '121\'e dön',
+  // v1.1.1
+  'game.settings': 'Oyun ayarları', 'gs.callAll': 'Hepsi', 'gs.callBig': 'Önemliler', 'gs.callOff': 'Kapalı', 'gs.callAllSub': 'Her skor, kalan ve bitiriş anons edilir.', 'gs.callBigSub': 'Yalnızca 100+, bust ve bitirişler anons edilir; arka plandaki müzik daha az kesilir.', 'gs.callOffSub': 'Anons yok; müziğin hiç etkilenmez.', 'gs.inputPad': 'Tuş takımı', 'gs.inputBoard': 'Tahtaya tıkla',
 };
 
 const en = {
@@ -260,6 +262,8 @@ const en = {
   'setup.atcSkip': 'Doubles/trebles skip ahead', 'setup.atcSkipSub': 'A single moves 1 target, a double 2, a treble 3',
   'setup.outAtZero': 'Out at 0', 'setup.outAtZeroSub': 'You are out when the score drops to 0 or below (off: only below 0)',
   'setup.failRule': 'When you miss', 'setup.failDown': 'Go down one', 'setup.failStart': 'Back to 121',
+  // v1.1.1
+  'game.settings': 'Game settings', 'gs.callAll': 'All', 'gs.callBig': 'Big ones', 'gs.callOff': 'Off', 'gs.callAllSub': 'Every score, requirement and finish is called.', 'gs.callBigSub': 'Only 100+, busts and finishes are called, so background music is interrupted less.', 'gs.callOffSub': 'No calls; your music is never affected.', 'gs.inputPad': 'Keypad', 'gs.inputBoard': 'Tap the board',
 };
 
 const DICTS = { tr, en };

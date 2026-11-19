@@ -972,3 +972,10 @@ html.locked .game { touch-action: pan-x pan-y; }
 .bull-board .bb-brand.small { fill: #9b978c; font-size: 9px; letter-spacing: 2px; }
 .bull-dart text { font-size: 13px; }
 @media (max-width: 520px) { .leg-table .avatar { display: none; } .leg-table td, .leg-table th { padding-left: 6px; padding-right: 6px; font-size: 13px; } }
+
+/* ===== v1.1.1 — in-game settings ===== */
+.gs-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface-container); }
+.gs-row:first-child { border-radius: var(--r-l) var(--r-l) var(--r-xs) var(--r-xs); }
+.gs-row:last-child { border-radius: var(--r-xs) var(--r-xs) var(--r-l) var(--r-l); }
+.gs-row:only-child { border-radius: var(--r-l); }
+.dialog .field .label-l { display: inline-flex; align-items: center; gap: 6px; }
