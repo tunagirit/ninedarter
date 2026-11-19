@@ -134,7 +134,7 @@ export function Setup({ type, preset, picker, onPick, carry }) {
   const begin = async () => {
     if (!roster.some((p) => !p.bot)) return snack(t('setup.needPlayer'));
     // keep match records small: only remote photo URLs are stored, local photos are resolved live
-    const players = roster.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, kind: p.kind, ...(p.bot ? { bot: p.bot } : {}), ...(p.photo && /^https?:/.test(p.photo) ? { photo: p.photo } : {}) }));
+    const players = roster.map((p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, kind: p.kind, ...(p.country ? { country: p.country } : {}), ...(p.bot ? { bot: p.bot } : {}), ...(p.photo && /^https?:/.test(p.photo) ? { photo: p.photo } : {}) }));
     let cfg;
     if (type === 'x01') cfg = { players, start, in: inR, out: outR, sets, fmt, legsN: legs, setsN, legsToWin: toFirst(legs), setsToWin: toFirst(setsN), rounds: roundLimitOn ? rounds : 0 };
     else if (type === 'cricket') cfg = { players, mode: cMode, scoring: cMode === 'akyaka' ? 'none' : scoring, no1011: (cMode === 'fullboard' || cMode === 'tactics') && no1011, rounds: 0, legsToWin: cLegs, selfScore: true };

@@ -1,6 +1,7 @@
 // Shared UI primitives in the M3 Expressive style.
 import { html, useState, useEffect, useRef } from '../vendor/preact-htm.js';
 import { getState } from './store.js';
+import { isCountry, flagUrl } from './flags.js';
 
 export const Icon = ({ n, fill, size, cls = '' }) =>
   html`<span class=${'msr ' + (fill ? 'fill ' : '') + cls} style=${size ? `font-size:${size}px` : ''} aria-hidden="true">${n}</span>`;
@@ -30,17 +31,21 @@ export function Avatar({ p, size = '', spin = false }) {
   const letter = p.bot ? '' : (p.name || '?').trim().charAt(0).toUpperCase();
   const shape = p.shape || 'cookie';
   const gs = getState();
-  const photo = p.photo || (!p.bot && (p.kind === 'me' || p.id === gs.profile?.localId) ? gs.account?.avatar || gs.profile?.photo : null);
+  const isMe = !p.bot && (p.kind === 'me' || p.id === gs.profile?.localId);
+  const photo = p.photo || (isMe ? gs.account?.avatar || gs.profile?.photo : null);
+  // v1.1.2: small nationality flag at the bottom right
+  const country = p.country || (isMe ? gs.account?.country || gs.profile?.country : gs.friends?.find((f) => f.id === p.id)?.country);
+  const flag = !p.bot && isCountry(country) && html`<img class="av-flag" src=${flagUrl(country)} alt=${country} loading="lazy" draggable="false" />`;
   if (photo) {
     const cid = 'av-' + shape;
     return html`<div class=${'avatar photo ' + size + (spin ? ' spin' : '')} style=${`--ph:${p.hue ?? 285}`}>
       <svg viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id=${cid}><path d=${shapePath(shape)} /></clipPath></defs>
-        <path d=${shapePath(shape)} /><image href=${photo}x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" clip-path=${`url(#${cid})`} /></svg>
+        <path d=${shapePath(shape)} /><image href=${photo} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" clip-path=${`url(#${cid})`} /></svg>${flag}
     </div>`;
   }
   return html`<div class=${'avatar ' + size + (spin ? ' spin' : '')} style=${`--ph:${p.hue ?? 285}`}>
     <svg viewBox="0 0 100 100" aria-hidden="true"><path d=${shapePath(shape)} /></svg>
-    ${p.bot ? html`<${Icon} n="smart_toy" fill size=${size === 'xl' ? 40 : size === 'l' ? 28 : 20} />` : html`<span>${letter}</span>`}
+    ${p.bot ? html`<${Icon} n="smart_toy" fill size=${size === 'xl' ? 40 : size === 'l' ? 28 : 20} />` : html`<span>${letter}</span>`}${flag}
   </div>`;
 }
 

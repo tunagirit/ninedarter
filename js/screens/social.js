@@ -7,6 +7,7 @@ import { go } from '../match.js';
 import { TopBar } from './common.js';
 import { isWinner } from '../teams.js';
 import * as cloud from '../cloud.js';
+import { Flag, countryName } from '../flags.js';
 
 const lang = () => (useStore().settings.lang === 'tr' ? 'tr-TR' : 'en-GB');
 function ago(iso, locale) {
@@ -48,6 +49,7 @@ export function FriendPage({ id }) {
     <section class="profile-hero">
       <${Avatar} p=${friendPlayer(f)} size="xxl" />
       <div class="display-s">${f.name}</div>
+      ${f.country && html`<div class="country-line"><${Flag} code=${f.country} /><span>${countryName(f.country, document.documentElement.lang || 'tr')}</span></div>`}
       ${f.username && f.username !== f.name && html`<div class="body-m">@${f.username}</div>`}
       <div class="row wrap" style="justify-content:center;gap:8px">
         <span class="badge win"><${Icon} n="handshake" size=${14} /> ${f.since ? t('friend.since', { date: new Date(f.since).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' }) }) : t('kind.friend')}</span>

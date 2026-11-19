@@ -979,3 +979,23 @@ html.locked .game { touch-action: pan-x pan-y; }
 .gs-row:last-child { border-radius: var(--r-xs) var(--r-xs) var(--r-l) var(--r-l); }
 .gs-row:only-child { border-radius: var(--r-l); }
 .dialog .field .label-l { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ===== v1.1.2 — nationality ===== */
+.flag { display: inline-block; width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.12); background: var(--surface-container-highest); }
+.avatar { position: relative; }
+.avatar .av-flag { position: absolute; right: -3%; bottom: -3%; width: 38%; height: 38%; min-width: 14px; min-height: 14px; max-width: 34px; max-height: 34px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--surface), 0 1px 3px rgb(0 0 0 / 0.3); z-index: 1; pointer-events: none; }
+/* tiny avatars (chips, team rows, stacked friends) stay clean */
+.chip .avatar .av-flag, .stackav .avatar .av-flag, .team-members .tm .avatar .av-flag, .cricket .head .tav .avatar .av-flag, .tapchip .av-flag { display: none; }
+.country-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 10px; border: 0; cursor: pointer; border-radius: 999px; background: color-mix(in oklch, var(--surface) 35%, transparent); color: inherit; font: inherit; font-weight: 650; }
+.country-btn .flag { width: 24px; height: 24px; }
+.country-line { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.field-wrap { position: relative; display: flex; align-items: center; }
+.field-wrap > .msr { position: absolute; left: 14px; color: var(--on-surface-variant); pointer-events: none; }
+.field-wrap .textfield { padding-left: 46px; }
+.country-list { display: flex; flex-direction: column; gap: 2px; max-height: min(420px, calc(55 * var(--vh))); overflow-y: auto; overscroll-behavior: contain; margin: 0 -8px; padding: 0 8px; }
+.country-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-radius: var(--r-m); background: transparent; color: var(--on-surface); font: inherit; text-align: left; cursor: pointer; }
+.country-row:hover { background: var(--surface-container-highest); }
+.country-row.on { background: var(--secondary-container); color: var(--on-secondary-container); font-weight: 700; }
+.country-row.clear { color: var(--on-surface-variant); }
+.country-row .flag { width: 28px; height: 28px; }
+.avatar-edit .cam { right: auto; left: -4px; } /* v1.1.2: the flag sits bottom right */

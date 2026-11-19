@@ -131,6 +131,8 @@ const tr = {
   'setup.failRule': 'Bitiremezsen', 'setup.failDown': 'Bir aşağı in', 'setup.failStart': '121\'e dön',
   // v1.1.1
   'game.settings': 'Oyun ayarları', 'gs.callAll': 'Hepsi', 'gs.callBig': 'Önemliler', 'gs.callOff': 'Kapalı', 'gs.callAllSub': 'Her skor, kalan ve bitiriş anons edilir.', 'gs.callBigSub': 'Yalnızca 100+, bust ve bitirişler anons edilir; arka plandaki müzik daha az kesilir.', 'gs.callOffSub': 'Anons yok; müziğin hiç etkilenmez.', 'gs.inputPad': 'Tuş takımı', 'gs.inputBoard': 'Tahtaya tıkla',
+  // v1.1.2
+  'profile.pickCountry': 'Uyruk seç', 'profile.country': 'Uyruk', 'profile.countrySearch': 'Ülke ara', 'profile.countryNone': 'Uyruk gösterme', 'profile.countryNoMatch': 'Eşleşen ülke yok', 'profile.countrySaved': 'Uyruk: {name}', 'profile.countryCleared': 'Uyruk kaldırıldı', 'profile.countryCloudErr': 'Uyruk bu cihazda kaydedildi ama hesaba yüklenemedi',
 };
 
 const en = {
@@ -264,6 +266,8 @@ const en = {
   'setup.failRule': 'When you miss', 'setup.failDown': 'Go down one', 'setup.failStart': 'Back to 121',
   // v1.1.1
   'game.settings': 'Game settings', 'gs.callAll': 'All', 'gs.callBig': 'Big ones', 'gs.callOff': 'Off', 'gs.callAllSub': 'Every score, requirement and finish is called.', 'gs.callBigSub': 'Only 100+, busts and finishes are called, so background music is interrupted less.', 'gs.callOffSub': 'No calls; your music is never affected.', 'gs.inputPad': 'Keypad', 'gs.inputBoard': 'Tap the board',
+  // v1.1.2
+  'profile.pickCountry': 'Choose nationality', 'profile.country': 'Nationality', 'profile.countrySearch': 'Search countries', 'profile.countryNone': 'Don\'t show a nationality', 'profile.countryNoMatch': 'No matching country', 'profile.countrySaved': 'Nationality: {name}', 'profile.countryCleared': 'Nationality removed', 'profile.countryCloudErr': 'Saved on this device, but it could not be uploaded to your account',
 };
 
 const DICTS = { tr, en };

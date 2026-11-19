@@ -7,6 +7,7 @@ import { TopBar } from './common.js';
 import { Stats } from './stats.js';
 import { History } from './results.js';
 import * as cloud from '../cloud.js';
+import { countryList, countryName, Flag } from '../flags.js';
 
 // ---------- small form helpers ----------
 function Field({ label, type = 'text', value, onInput, autocomplete, hint, error, onEnter, icon }) {
@@ -174,6 +175,33 @@ function Friends() {
 }
 
 // ---------- profile screen ----------
+/** Searchable country list; resolves to an ISO code, '' to clear, or undefined when closed. */
+function countryDialog(current) {
+  return openDialog((close) => {
+    const Inner = () => {
+      const lang = useStore().settings.lang;
+      const [q, setQ] = useState('');
+      const ref = useRef();
+      useEffect(() => { ref.current?.focus(); }, []);
+      const norm = (s) => s.toLocaleLowerCase(lang).normalize('NFD').replace(/[̀-ͯ]/g, '');
+      // the phone's own region first, then names that start with the search, then the rest
+      const LANG_HOME = { tr: 'TR', de: 'DE', nl: 'NL', fr: 'FR', es: 'ES', it: 'IT', pl: 'PL', pt: 'PT', en: 'GB' };
+      const langs = navigator.languages?.length ? navigator.languages : [navigator.language || ''];
+      const home = langs.map((l) => l.split('-')[1]?.toUpperCase()).find(Boolean) || LANG_HOME[(langs[0] || '').slice(0, 2).toLowerCase()];
+      const rank = (c) => (c.code === home ? 0 : q && norm(c.name).startsWith(norm(q)) ? 1 : 2);
+      const list = countryList(lang).filter((c) => !q || norm(c.name).includes(norm(q)) || c.code.toLowerCase() === q.toLowerCase()).sort((a, b) => rank(a) - rank(b));
+      return html`<div class="row between"><div class="headline-s">${t('profile.country')}</div><${IconBtn} icon="close" title=${t('common.close')} onClick=${() => close()} /></div>
+        <div class="field-wrap"><${Icon} n="search" /><input ref=${ref} class="textfield" placeholder=${t('profile.countrySearch')} value=${q} onInput=${(e) => setQ(e.target.value)} /></div>
+        <div class="country-list">
+          ${current && html`<button class="country-row clear" onClick=${() => close('')}><${Icon} n="block" /><span class="grow">${t('profile.countryNone')}</span></button>`}
+          ${list.map((c) => html`<button class=${'country-row' + (c.code === current ? ' on' : '')} key=${c.code} onClick=${() => close(c.code)}><${Flag} code=${c.code} /><span class="grow">${c.name}</span>${c.code === current && html`<${Icon} n="check" />`}</button>`)}
+          ${!list.length && html`<div class="body-m muted" style="padding:16px;text-align:center">${t('profile.countryNoMatch')}</div>`}
+        </div>`;
+    };
+    return html`<${Inner} />`;
+  });
+}
+
 export function Profile({ tab: tab0, pid } = {}) {
   const st = useStore();
   const me = mePlayer(st);
@@ -181,6 +209,12 @@ export function Profile({ tab: tab0, pid } = {}) {
   const fileRef = useRef();
   const [nameEdit, setNameEdit] = useState(null);
   const [tab, setTab] = useState(tab0 || (st.account || !cloud.cloudEnabled() ? 'stats' : 'account'));
+  const pickCountry = async () => {
+    const code = await countryDialog(me.country);
+    if (code === undefined || code === null) return;
+    try { await cloud.setCountry(code || null); snack(code ? t('profile.countrySaved', { name: countryName(code, st.settings.lang) }) : t('profile.countryCleared')); }
+    catch { snack(t('profile.countryCloudErr')); }
+  };
 
   useEffect(() => { if (acc) cloud.loadFriends().catch(() => {}); }, [acc?.uid]);
 
@@ -240,6 +274,7 @@ export function Profile({ tab: tab0, pid } = {}) {
         ${acc ? html`<span class="body-m">@${acc.username}</span><span class="badge win"><${Icon} n="verified" size=${14} /> ${t('profile.online')}</span><span class="body-m">${acc.email}</span>`
           : html`<span class="badge"><${Icon} n="cloud_off" size=${14} /> ${t('profile.offline')}</span>`}
       </div>
+      <button class="country-btn" onClick=${pickCountry}>${me.country ? html`<${Flag} code=${me.country} /><span>${countryName(me.country, st.settings.lang)}</span>` : html`<${Icon} n="flag" size=${18} /><span>${t('profile.pickCountry')}</span>`}<${Icon} n="expand_more" size=${18} /></button>
       ${me.photo && html`<${Btn} kind="text" size="s" icon="hide_image" onClick=${removePhoto}>${t('profile.removePhoto')}<//>`}
     </section>
 

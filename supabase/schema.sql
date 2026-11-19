@@ -134,3 +134,10 @@ create policy "mark received as read" on public.messages for update to authentic
 -- recipients may only change read_at
 revoke update on public.messages from authenticated;
 grant update (read_at) on public.messages to authenticated;
+-- ---------------------------------------------------------------------------
+-- v1.1.2 migration: nationality shown next to the profile photo
+-- ISO 3166-1 alpha-2 code (TR, DE, NL …) or a UK home nation (GB-ENG, GB-SCT, GB-WLS, GB-NIR).
+-- Users already update their own row through the "users update own profile" policy.
+alter table public.profiles add column if not exists country text;
+alter table public.profiles drop constraint if exists country_code;
+alter table public.profiles add constraint country_code check (country is null or country ~ '^[A-Z]{2}(-[A-Z]{3})?$');

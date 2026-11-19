@@ -41,9 +41,9 @@ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
 export function mePlayer(s = state) {
   const p = s.profile;
   const name = s.account ? s.account.displayName || s.account.username : p.name || (s.settings.lang === 'tr' ? 'Ben' : 'Me');
-  return { id: s.account?.uid || p.localId, name, hue: p.hue, shape: p.shape, photo: s.account?.avatar || p.photo || null, kind: 'me' };
+  return { id: s.account?.uid || p.localId, name, hue: p.hue, shape: p.shape, photo: s.account?.avatar || p.photo || null, kind: 'me', country: (s.account ? s.account.country : p.country) || p.country || null };
 }
-export const friendPlayer = (f) => ({ id: f.id, name: f.name, hue: Math.round((parseInt(f.id.slice(0, 2), 16) || [...f.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)) * 1.4) % 360, shape: 'flower', photo: f.photo || null, kind: 'friend' });
+export const friendPlayer = (f) => ({ id: f.id, name: f.name, hue: Math.round((parseInt(f.id.slice(0, 2), 16) || [...f.id].reduce((a, ch) => a + ch.charCodeAt(0), 0)) * 1.4) % 360, shape: 'flower', photo: f.photo || null, kind: 'friend', country: f.country || null });
 export const offlinePlayer = (p) => ({ id: p.id, name: p.name, hue: p.hue, shape: p.shape, photo: p.photo || null, kind: 'offline' });
 const subs = new Set();
 

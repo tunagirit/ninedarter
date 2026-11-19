@@ -53,8 +53,11 @@ export async function initCloud() {
 async function loadAccount(user) {
   const c = await sb();
   const { data: prof } = await c.from('profiles').select('*').eq('id', user.id).maybeSingle();
-  const acc = { uid: user.id, email: user.email, username: prof?.username || user.user_metadata?.username || 'player', displayName: prof?.display_name || '', avatar: prof?.avatar_url || null };
+  const acc = { uid: user.id, email: user.email, username: prof?.username || user.user_metadata?.username || 'player', displayName: prof?.display_name || '', avatar: prof?.avatar_url || null, country: prof?.country || null };
   const localPhoto = getState().profile.photo;
+  // a nationality picked before signing in is uploaded once (needs the v1.1.2 "country" column)
+  const localCountry = getState().profile.country;
+  if (!acc.country && localCountry) { const { error } = await c.from('profiles').update({ country: localCountry }).eq('id', user.id); if (!error) acc.country = localCountry; }
   update((s) => {
     s.account = acc;
     // Link the local "me" identity to this account (first time only) and migrate local history.
@@ -66,7 +69,7 @@ async function loadAccount(user) {
       if (s.active) s.active = { ...s.active, config: { ...s.active.config, players: s.active.config.players.map(swap) } };
       for (const k of Object.keys(s.lastSetup)) s.lastSetup[k] = { ...s.lastSetup[k], players: (s.lastSetup[k].players || []).map(swap) };
     }
-    s.profile = { ...p, localId: acc.uid, linked: true, name: acc.displayName || acc.username, photo: acc.avatar || p.photo };
+    s.profile = { ...p, localId: acc.uid, linked: true, name: acc.displayName || acc.username, photo: acc.avatar || p.photo, country: acc.country || p.country || null };
   });
   // A photo picked before signing in only lived on this device: upload it so friends can see it.
   if (!acc.avatar && localPhoto && localPhoto.startsWith('data:')) {
@@ -225,11 +228,11 @@ export async function loadFriends() {
   const otherIds = [...new Set(rows.map((r) => (r.requester === uid ? r.addressee : r.requester)))];
   let profs = [];
   if (otherIds.length) {
-    const { data, error: e2 } = await c.from('profiles').select('id,username,display_name,avatar_url,stats').in('id', otherIds);
+    const { data, error: e2 } = await c.from('profiles').select('*').in('id', otherIds);
     if (e2) throw e2;
     profs = data;
   }
-  const P = Object.fromEntries(profs.map((p) => [p.id, { id: p.id, name: p.display_name || p.username, username: p.username, photo: p.avatar_url, stats: p.stats || {} }]));
+  const P = Object.fromEntries(profs.map((p) => [p.id, { id: p.id, name: p.display_name || p.username, username: p.username, photo: p.avatar_url, country: p.country || null, stats: p.stats || {} }]));
   const other = (r) => (r.requester === uid ? r.addressee : r.requester);
   update((s) => {
     s.friends = rows.filter((r) => r.status === 'accepted' && P[other(r)]).map((r) => ({ ...P[other(r)], fid: r.id, since: r.accepted_at || r.created_at }));
@@ -238,7 +241,7 @@ export async function loadFriends() {
 }
 export async function findUser(username) {
   const c = await sb();
-  const { data, error } = await c.from('profiles').select('id,username,display_name,avatar_url').ilike('username', username.replace(/[%_]/g, (m) => '\\' + m)).limit(1);
+  const { data, error } = await c.from('profiles').select('*').ilike('username', username.replace(/[%_]/g, (m) => '\\' + m)).limit(1);
   if (error) throw error;
   return data[0] || null;
 }
@@ -319,4 +322,15 @@ export function errKey(e) {
   if (m.includes('failed to fetch') || m.includes('network')) return 'auth.err.network';
   if (m.includes('duplicate key') && m.includes('friend')) return 'friends.err.exists';
   return 'auth.err.generic';
+}
+
+// ---------- nationality (v1.1.2) ----------
+/** Save the nationality (ISO code, or null to clear) locally and, when signed in, on the profile others see. */
+export async function setCountry(code) {
+  update((s) => { s.profile = { ...s.profile, country: code || null }; if (s.account) s.account = { ...s.account, country: code || null }; });
+  const acc = getState().account;
+  if (!acc) return;
+  const c = await sb();
+  const { error } = await c.from('profiles').update({ country: code || null, updated_at: new Date().toISOString() }).eq('id', acc.uid);
+  if (error) throw error;
 }
