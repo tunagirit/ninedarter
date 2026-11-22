@@ -101,7 +101,7 @@ Ardından `http://localhost:3000` (veya ilgili port) adresini açın. Service wo
 
 ## Testler
 
-X01 ve Cricket puan motorları için birim testleri `tests/` klasöründe; bağımlılık gerekmez (Node 20+):
+X01 ve Cricket puan motorları için birim testleri `tests/` klasöründe; bağımlılık gerekmez (Node 22+):
 
 ```bash
 npm test
