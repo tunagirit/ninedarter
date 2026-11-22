@@ -1,153 +1,94 @@
 <p align="center">
-  <img src="icons/icon-192.png" width="96" alt="ninedarter logo" />
+  <img src="icons/icon-192.png" width="104" alt="ninedarter" />
 </p>
 
-<h1 align="center">ninedarter</h1>
-
-<p align="center"><a href="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml"><img src="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml/badge.svg" alt="Testler"></a></p>
+<h1 align="center">🎯 ninedarter</h1>
 
 <p align="center">
-  <b>Material 3 Expressive tasarımlı, tarayıcıda çalışan dart skor uygulaması.</b><br/>
-  X01 · Cricket · Antrenman oyunları · Botlar · Detaylı istatistikler · Çevrimdışı PWA
+  <b>The darts scorer that feels like a modern app.</b><br/>
+  X01 · Cricket · Training games · Bots · Deep stats · Friends — right in your browser.
 </p>
 
 <p align="center">
-  <a href="https://tunagirit.github.io/ninedarter/"><b>▶ Uygulamayı aç</b></a> ·
-  <a href="#english">English</a>
+  <a href="https://tunagirit.github.io/ninedarter/"><img src="https://img.shields.io/badge/▶_Open_the_app-7c4dff?style=for-the-badge" alt="Open the app"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml"><img src="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <img src="https://img.shields.io/badge/PWA-offline-5e35b1" alt="PWA">
+  <img src="https://img.shields.io/badge/lang-EN%20%7C%20TR-546e7a" alt="EN | TR">
+  <img src="https://img.shields.io/badge/license-All%20rights%20reserved-b71c1c" alt="All rights reserved">
+</p>
+
+<p align="center">
+  <a href="#english">English</a> · <a href="#türkçe">Türkçe</a>
+</p>
+
+<p align="center">
+  <img src="docs/home.png" width="220" alt="Home">
+  <img src="docs/setup.png" width="220" alt="Match setup">
+  <img src="docs/x01.png" width="220" alt="X01 match">
 </p>
 
 ---
 
-## Özellikler
+<a id="english"></a>
 
-### Oyunlar
-- **Maç Oyna (X01)** — 301 / 501 / 701 / 1001 veya özel başlangıç skoru
-  - Giriş: Straight / Double / Master in · Çıkış: Double / Straight / Master out
-  - “İlk N” veya “En iyi N” formatı, **leg** ya da **set** modu
-  - 8 oyuncuya kadar veya **takım modu** (2–4 takım), leg/set başlangıcı otomatik döner
-- **Cricket** — dört oyun türü; puanlama: **Standart ceza**, **Katlamalı ceza** (×2), **Klasik puan** veya **Cezasız**; takım modu, tur limiti, çoklu leg
-  - **Cricket:** 20–15 ve Bull
-  - **Fullboard:** 20–10 + Double, Triple ve House; aktif bir sayının double/triple'ında sayıya mı (2/3 çentik) Double/Triple hanesine mi (1 çentik) yazılacağı sorulur; House: dış bull 1, iç bull 2 çentik; 10–11 çıkarılabilir
-  - **Tactics:** yalnızca 20–10 (double 2, triple 3 çentik); 10–11 çıkarılabilir
-  - **Akyaka:** sıralı Cricket — önce 20, sonra 19 … 15, en son toplam 3 Bull; sıradaki hedef kapanmadan diğerleri işlemez
-- **Antrenman**
-  - **121 Checkout** — 9 dartta bitir, hedef yükselsin
-  - **Saat Yönünde** (Around the Clock) — herhangi / double / triple hedefler, Bull ile bitiş
-  - **Bob's 27** — double antrenmanı
-  - **Doubles Training** — D1–D20 ve Bull'a 3'er dart
-  - **Rastgele Checkout** — seçilen aralıkta rastgele bitirişler, önerilen rota ile
-  - **Shanghai** — 1–7 veya 1–20; single + double + triple = anında galibiyet
-  - **Akyaka** — sıralı Cricket (Cricket ekranından da seçilebilir)
+## 🇬🇧 English
 
-### Skor girişi
-- **Toplam skor tuş takımı** — hızlı skor tuşları (26, 45, 60, 81, 100, 140, 180), fiziksel klavye desteği
-- **Dart dart giriş** — Tek / Double / Triple seçimi + tahta numaraları, otomatik bust ve checkout algılama
-- İmkânsız skorların (163, 166, 169, 172…) ve geçersiz bitirişlerin engellenmesi
-- Checkout'ta kullanılan dart ve double'a atılan dart sayısı (doğru checkout % için)
-- Sınırsız **geri al**
+### What is it?
+**ninedarter** keeps score for your darts nights so you can just throw. Enter a visit total or tap dart by dart; busts, checkouts and impossible scores are handled for you, and every match turns into stats you can actually learn from. Play against friends, an 11-level bot, or train alone.
 
-### Botlar
-11 seviyeli bilgisayar rakibi: X01'de ~25 → ~107 ortalama, Cricket'te ~0.5 → ~4.6 MPR. Botlar gerçek bir dart tahtası geometrisi üzerinde, seviyeye göre sapma ile atış simüle eder ve checkout rotalarını takip eder. X01 ve Cricket'te kullanılabilir.
+### 🎯 Games
+- **X01** — 301 / 501 / 701 / 1001 or custom · straight, double or master in & out · first-to or best-of · legs and sets · up to 8 players or teams
+- **Cricket** — Cricket, Tactics, Fullboard and Akyaka (sequential) · penalty, master, classic points or no-score · teams and round limits
+- **Training** — 121 Checkout, Around the Clock, Bob's 27, Doubles Training, Random Checkout, Shanghai
 
-### İstatistikler
-- 3 dart ortalaması, ilk 9 ortalaması, checkout %, en yüksek bitiriş, en iyi leg, 180 / 140+ / 100+ / 60+
-- Cricket MPR (tur başına işaret), 5+ işaretli turlar
-- Antrenman rekorları ve gelişim grafikleri
-- Canlı maç istatistiği, maç sonu karşılaştırma tablosu ve leg dökümü
-- Maç geçmişi, rövanş
+### ✨ Highlights
+| | |
+|---|---|
+| ⌨️ **Fast input** | Quick-score keypad (26, 45, 60, 81, 100, 140, 180) or dart-by-dart, keyboard support, unlimited undo. |
+| 🤖 **Bots** | 11 levels, from ~25 to ~107 average, throwing on real board geometry and following checkout routes. |
+| 📊 **Stats** | 3-dart average, first 9, checkout %, best leg, high finish, ton counts, cricket MPR, records and trend charts. |
+| 👥 **Friends** | Account, profile photo, cloud sync, friends, shared match history, messages and notifications. |
+| 🗣️ **Caller** | Checkout hints and a voice that calls your scores — *“One hundred and eighty!”* |
+| 🎨 **Design** | Material 3 Expressive: dynamic colour, expressive shapes, spring motion, light & dark themes. |
+| 📴 **Offline** | Install it as an app; it works without internet and without an account. |
 
-### Hesap ve profil (v1.0.1)
-- **Hesap sistemi** — e-posta, kullanıcı adı ve şifre ile kayıt; e-posta doğrulama; **şifremi unuttum** bağlantısı
-- **Profil** — profil fotoğrafı, kullanıcı adı, ortalamalar ve özet istatistikler
-- **Bulut senkronizasyonu** — maçlar ve istatistikler hesaba yedeklenir, cihazlar arasında eşitlenir; hesap açmadan önceki maçlar hesaba taşınır
-- **Çevrimiçi arkadaşlar** — kullanıcı adıyla arkadaş ekleme; arkadaşla oynanan maç iki tarafın geçmişine de düşer
-- **Arkadaş sayfası** — istatistikler, arkadaşlık tarihi ve karşılıklı skor
-- **Mesajlaşma** — arkadaşlarla sohbet, okundu bilgisi; **bildirimler** (arkadaşlık istekleri, yeni mesajlar)
-- **Görünen ad** — kullanıcı adından ayrı; boş bırakılırsa kullanıcı adı görünür
-- Ana ekranda profil fotoğraflı **hoş geldin kartı** ve son maç ortalamaları
-- **Çevrimdışı oyuncular** — Ayarlar'dan kayıtlı oyuncu isimleri; oyun kurarken Arkadaşlar / Çevrimdışı / Bot sekmelerinden seçim
-- Hesap açmadan da uygulama tamamen çevrimdışı çalışır
-
-### Diğer
-- **Checkout önerileri** (2–170, kalan dart sayısına göre)
-- **Sesli skor anonsu** (Web Speech API — “One hundred and eighty!”)
-- Yarım kalan maçı sonra sürdürme
-- Türkçe / English arayüz
-- Ayarlardan **uygulama olarak yükleme** (PWA)
-- Açık / koyu / sistem teması ve özelleştirilebilir tema rengi (dinamik renk)
-- JSON yedekleme / geri yükleme
-- **PWA** — ana ekrana eklenebilir, çevrimdışı çalışır. Tüm veriler yalnızca cihazınızda (localStorage) saklanır.
-
-## Tasarım: Material 3 Expressive
-
-- OKLCH ile tek bir tohum renkten üretilen tonal renk şeması (açık + koyu)
-- Ekspresif şekiller: cookie, flower, clover, burst… avatarlar ve dekorlar; aktif oyuncu kartında şekil dönüşümü
-- Basıldığında şekil değiştiren butonlar, bağlı buton grupları (connected button groups)
-- Yay (spring) tabanlı hareket eğrileri, dalgalı (wavy) ilerleme göstergesi
-- Roboto Flex değişken yazı tipi ile vurgulu (emphasized) tipografi
-- Mobilde navigation bar, geniş ekranda navigation rail
-
-## Çalıştırma
-
-Derleme adımı yoktur — saf HTML/CSS/JS (ES modules) + gömülü [Preact](https://preactjs.com/) + [htm](https://github.com/developit/htm).
-
-```bash
-git clone https://github.com/tunagirit/ninedarter.git
-cd ninedarter
-npx serve .        # veya: python -m http.server
-```
-
-Ardından `http://localhost:3000` (veya ilgili port) adresini açın. Service worker ve ES modülleri nedeniyle `file://` ile değil, bir HTTP sunucusu üzerinden açılmalıdır.
-
-## Testler
-
-X01 ve Cricket puan motorları için birim testleri `tests/` klasöründe; bağımlılık gerekmez (Node 22+):
-
-```bash
-npm test
-```
-
-Her `main` push'unda ve pull request'te **GitHub Actions** (`.github/workflows/test.yml`) testleri otomatik çalıştırır.
-
-## Proje yapısı
-
-```
-index.html             Uygulama kabuğu
-css/app.css            M3 Expressive tasarım sistemi (token'lar, bileşenler, hareket)
-js/darts.js            Tahta geometrisi, checkout tablosu, bust kuralları
-js/bot.js              Bot seviyeleri ve atış simülasyonu
-js/engines/            X01, Cricket ve antrenman motorları (aksiyon kaydından yeniden hesaplanır → kolay geri alma)
-js/screens/            Ekranlar (ana sayfa, kurulum, oyun, sonuç, istatistik, oyuncular, ayarlar)
-js/store.js            localStorage tabanlı kalıcı durum
-js/cloud.js            Supabase: hesap, şifre sıfırlama, senkronizasyon, arkadaşlar
-supabase/schema.sql    Veritabanı şeması ve güvenlik kuralları (RLS)
-js/i18n.js             TR / EN çeviriler
-sw.js                  Çevrimdışı önbellek
-```
-
-## Kendi Supabase projenle çalıştırma
-
-Hesap özellikleri [Supabase](https://supabase.com) kullanır (ücretsiz plan yeterli):
-
-1. Yeni bir proje aç, **SQL Editor**'da [`supabase/schema.sql`](supabase/schema.sql) dosyasını çalıştır.
-2. **Authentication → URL Configuration**: Site URL ve Redirect URLs'e kendi site adresini ekle.
-3. **Authentication → Emails → SMTP Settings**: e-posta göndermek için bir SMTP sağlayıcısı tanımla (yerleşik servis yalnızca ekip üyelerine gönderir).
-4. [`js/config.js`](js/config.js) içine proje URL'sini ve `anon` anahtarını yaz. `config.js` boş bırakılırsa uygulama tamamen çevrimdışı çalışır.
-
-## Lisans
-
-[MIT](LICENSE)
+### ▶️ Open the app
+**https://tunagirit.github.io/ninedarter/**
 
 ---
 
-## English
+<a id="türkçe"></a>
 
-**ninedarter** is a free, open-source darts scorer with a Material 3 Expressive design that runs entirely in the browser.
+## 🇹🇷 Türkçe
 
-- **Games:** X01 (301–1001/custom, straight/double/master in & out, first-to/best-of, legs & sets), Cricket (standard & cut-throat), Around the Clock, Bob's 27, Checkout practice
-- **Input:** visit-total keypad with quick scores or dart-by-dart entry, automatic bust/checkout detection, unlimited undo
-- **Bots:** 11 levels (~25 to ~107 average) simulated on real board geometry
-- **Stats:** 3-dart average, first-9, checkout %, high finish, best leg, ton counts, cricket MPR, training records, trend charts, match history
-- **Extras:** checkout hints, voice caller, resume matches, TR/EN, light/dark & dynamic color, JSON backup, installable offline PWA. All data stays on your device.
+### Nedir?
+**ninedarter**, dart akşamlarında skoru senin yerine tutar, sen sadece at. Toplam skoru gir ya da dart dart dokun; bust, checkout ve imkânsız skorlar otomatik algılanır, her maç gerçekten işine yarayan istatistiklere dönüşür. Arkadaşlarınla, 11 seviyeli botla oyna ya da tek başına antrenman yap.
 
-Run it with any static server (`npx serve .`) — no build step required.
+### 🎯 Oyunlar
+- **X01** — 301 / 501 / 701 / 1001 veya özel · straight, double, master giriş ve çıkış · "ilk N" ya da "en iyi N" · leg ve set · 8 oyuncuya kadar ya da takım
+- **Cricket** — Cricket, Tactics, Fullboard ve Akyaka (sıralı) · ceza, master, klasik puan ya da cezasız · takım ve tur sınırı
+- **Antrenman** — 121 Checkout, Saat Yönünde, Bob's 27, Doubles Training, Rastgele Checkout, Shanghai
+
+### ✨ Öne çıkanlar
+| | |
+|---|---|
+| ⌨️ **Hızlı giriş** | Hızlı skor tuşları (26, 45, 60, 81, 100, 140, 180) ya da dart dart giriş, klavye desteği, sınırsız geri al. |
+| 🤖 **Botlar** | 11 seviye, ~25'ten ~107 ortalamaya; gerçek tahta geometrisinde atar, checkout rotalarını izler. |
+| 📊 **İstatistik** | 3 dart ortalaması, ilk 9, checkout %, en iyi leg, en yüksek bitiriş, 100+/140+/180, Cricket MPR, rekorlar ve gelişim grafikleri. |
+| 👥 **Arkadaşlar** | Hesap, profil fotoğrafı, bulut senkronizasyonu, arkadaşlar, ortak maç geçmişi, mesajlar ve bildirimler. |
+| 🗣️ **Sesli anons** | Checkout önerileri ve skoru okuyan ses — *“One hundred and eighty!”* |
+| 🎨 **Tasarım** | Material 3 Expressive: dinamik renk, ifadeli şekiller, yaylı hareketler, açık ve koyu tema. |
+| 📴 **İnternetsiz** | Uygulama olarak yükle; internet ve hesap olmadan da çalışır. |
+
+### ▶️ Uygulamayı aç
+**https://tunagirit.github.io/ninedarter/**
+
+---
+
+<p align="center">
+  © 2026 tunagirit · <b>All rights reserved / Tüm hakları saklıdır.</b><br/>
+  The source is public for viewing only — see <a href="LICENSE">LICENSE</a>. · Kaynak kodu yalnızca incelenmek için açıktır — <a href="LICENSE">LICENSE</a>.
+</p>
