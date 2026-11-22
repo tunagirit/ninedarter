@@ -4,6 +4,8 @@
 
 <h1 align="center">ninedarter</h1>
 
+<p align="center"><a href="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml"><img src="https://github.com/tunagirit/ninedarter/actions/workflows/test.yml/badge.svg" alt="Testler"></a></p>
+
 <p align="center">
   <b>Material 3 Expressive tasarımlı, tarayıcıda çalışan dart skor uygulaması.</b><br/>
   X01 · Cricket · Antrenman oyunları · Botlar · Detaylı istatistikler · Çevrimdışı PWA
@@ -96,6 +98,16 @@ npx serve .        # veya: python -m http.server
 ```
 
 Ardından `http://localhost:3000` (veya ilgili port) adresini açın. Service worker ve ES modülleri nedeniyle `file://` ile değil, bir HTTP sunucusu üzerinden açılmalıdır.
+
+## Testler
+
+X01 ve Cricket puan motorları için birim testleri `tests/` klasöründe; bağımlılık gerekmez (Node 20+):
+
+```bash
+npm test
+```
+
+Her `main` push'unda ve pull request'te **GitHub Actions** (`.github/workflows/test.yml`) testleri otomatik çalıştırır.
 
 ## Proje yapısı
 

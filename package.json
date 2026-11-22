@@ -1,0 +1,9 @@
+{
+  "name": "ninedarter",
+  "private": true,
+  "type": "module",
+  "description": "Dart skor uygulaması — testler: npm test",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
