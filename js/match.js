@@ -19,7 +19,12 @@ export const ENGINES = {
 export const go = (hash) => { location.hash = hash; };
 
 export function startMatch(type, config) {
-  update((s) => { s.active = { id: uid(), type, config, actions: [], started: Date.now() }; s.lastSetup[type] = config; });
+  update((s) => {
+    // v1.1.4: a match that is still running is kept in the paused list instead of being lost
+    if (s.active?.actions?.length) s.paused = keepPaused([{ ...s.active, pausedAt: Date.now() }, ...(s.paused || []).filter((p) => p.id !== s.active.id)]);
+    s.active = { id: uid(), type, config, actions: [], started: Date.now() };
+    s.lastSetup[type] = config;
+  });
   go('#/game');
 }
 
@@ -88,4 +93,35 @@ export function deleteMatch(id) {
 
 export function playerFromBot(level) {
   return { id: 'bot-' + level + '-' + uid(), name: 'Bot ' + level, bot: level, hue: 200 + level * 8, shape: 'gem' };
+}
+
+// ---------- paused matches (v1.1.4) ----------
+export const MAX_PAUSED = 10;
+const keepPaused = (list) => list.slice(0, MAX_PAUSED);
+
+/** "Continue later": park the running match so another one can be played meanwhile. */
+export function pauseActive() {
+  update((s) => {
+    if (!s.active) return;
+    const a = { ...s.active, pausedAt: Date.now() };
+    s.paused = keepPaused([a, ...(s.paused || []).filter((p) => p.id !== a.id)]);
+    s.active = null;
+  });
+}
+
+/** Bring a paused match back; whatever was running goes to the paused list. */
+export function resumeMatch(id) {
+  update((s) => {
+    const list = s.paused || [];
+    const m = list.find((p) => p.id === id);
+    if (!m) return;
+    const rest = list.filter((p) => p.id !== id);
+    s.paused = keepPaused(s.active?.actions?.length ? [{ ...s.active, pausedAt: Date.now() }, ...rest] : rest);
+    s.active = m;
+  });
+  go('#/game');
+}
+
+export function discardPaused(id) {
+  update((s) => { s.paused = (s.paused || []).filter((p) => p.id !== id); });
 }

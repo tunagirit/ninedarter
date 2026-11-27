@@ -1067,3 +1067,9 @@ html.locked .game { touch-action: pan-x pan-y; }
 .pl-me .setting > .msr { font-size: 20px; }
 .me-card .me-top { gap: 12px; }
 .bull-chip .bc-edit { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; opacity: 0.75; }
+
+/* ===== v1.1.4 — unfinished matches on the home screen ===== */
+.paused-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding: 14px; border-radius: var(--r-2xl); background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.paused-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--r-l); background: color-mix(in oklch, var(--surface) 45%, transparent); }
+.paused-item .avatar { width: 32px; height: 32px; font-size: 13px; }
+.paused-item .btn.text { color: inherit; }

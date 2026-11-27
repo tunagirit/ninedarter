@@ -2,7 +2,7 @@ import { html } from '../../vendor/preact-htm.js';
 import { useStore, mePlayer, friendPlayer } from '../store.js';
 import { t } from '../i18n.js';
 import { Icon, Btn, Shape, Avatar, confirmDialog } from '../ui.js';
-import { computeActive, go, abandonMatch, startMatch } from '../match.js';
+import { computeActive, go, abandonMatch, startMatch, resumeMatch, discardPaused } from '../match.js';
 import { modeName } from './common.js';
 import { winnerNames } from '../teams.js';
 import { aggregateX01 } from './stats.js';
@@ -100,18 +100,7 @@ export function Home() {
       <${BadgeBtn} href="#/notifications" icon="notifications" n=${counts.total} title=${t('nav.notifications')} />
     </header>
 
-    ${active && html`<div class="card tertiary row" style="margin-bottom:16px;border-radius:var(--r-2xl)">
-      <div class="grow stack s">
-        <div class="label-l">${t('home.resume')}</div>
-        <div class="title-l">${modeName(active.type, active.config)}</div>
-        <div class="row" style="gap:6px">${active.config.players.map((p) => html`<${Avatar} p=${p} />`)}
-          <span class="body-m" style="margin-left:6px">${active.type === 'x01' && s ? s.remaining.join(' · ') : ''}</span></div>
-      </div>
-      <div class="stack s">
-        <${Btn} kind="filled" icon="play_arrow" onClick=${() => go('#/game')}>${t('common.continue')}<//>
-        <${Btn} kind="text" size="s" onClick=${async () => { if (await confirmDialog({ title: t('game.abandonQ'), text: t('game.abandonText'), ok: t('game.abandon'), cancel: t('common.cancel'), danger: true, icon: 'delete' })) abandonMatch(); }}>${t('game.abandon')}<//>
-      </div>
-    </div>`}
+    ${(active || st.paused?.length > 0) && html`<${PausedList} active=${active} paused=${st.paused || []} />`}
 
     <div class="hero-row">
     <section class="hero">
@@ -158,3 +147,36 @@ export function RecentItem({ m }) {
 }
 
 export { MODES };
+
+/** v1.1.4: every unfinished match — the running one and the ones left with "continue later". */
+function PausedList({ active, paused }) {
+  const items = [...(active ? [{ m: active, running: true }] : []), ...paused.map((m) => ({ m, running: false }))];
+  const ago = (ts) => {
+    if (!ts) return '';
+    const min = Math.round((Date.now() - ts) / 60000);
+    return min < 1 ? t('home.justNow') : min < 60 ? t('home.minAgo', { n: min }) : min < 1440 ? t('home.hourAgo', { n: Math.round(min / 60) }) : new Date(ts).toLocaleDateString();
+  };
+  const remove = async (it) => {
+    if (!(await confirmDialog({ title: t('game.abandonQ'), text: t('game.abandonText'), ok: t('game.abandon'), cancel: t('common.cancel'), danger: true, icon: 'delete' }))) return;
+    if (it.running) abandonMatch(); else discardPaused(it.m.id);
+  };
+  return html`<section class="paused-list">
+    <div class="row between"><div class="label-l">${t(items.length > 1 ? 'home.resumeMany' : 'home.resume')}</div>${items.length > 1 && html`<span class="badge">${items.length}</span>`}</div>
+    ${items.map((it) => {
+      const s = computeActive(it.m);
+      const score = it.m.type === 'x01' && s ? s.remaining.join(' · ') : it.m.type === 'cricket' && s ? (s.legsWon || []).join(' – ') : '';
+      return html`<div class="paused-item" key=${it.m.id}>
+        <div class="grow stack s" style="min-width:0">
+          <div class="title-m ellipsis">${modeName(it.m.type, it.m.config)}</div>
+          <div class="row" style="gap:6px;min-width:0">${it.m.config.players.slice(0, 4).map((p) => html`<${Avatar} p=${p} />`)}
+            <span class="body-m ellipsis" style="margin-left:4px">${score}</span></div>
+          <div class="body-s muted">${it.running ? t('home.running') : ago(it.m.pausedAt)} · ${t('home.visitsN', { n: it.m.actions.length })}</div>
+        </div>
+        <div class="stack s" style="align-items:flex-end">
+          <${Btn} kind="filled" size="s" icon="play_arrow" onClick=${() => (it.running ? go('#/game') : resumeMatch(it.m.id))}>${t('common.continue')}<//>
+          <${Btn} kind="text" size="s" icon="delete" onClick=${() => remove(it)}>${t('common.delete')}<//>
+        </div>
+      </div>`;
+    })}
+  </section>`;
+}

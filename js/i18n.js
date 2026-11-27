@@ -135,6 +135,8 @@ const tr = {
   'profile.pickCountry': 'Uyruk seç', 'profile.country': 'Uyruk', 'profile.countrySearch': 'Ülke ara', 'profile.countryNone': 'Uyruk gösterme', 'profile.countryNoMatch': 'Eşleşen ülke yok', 'profile.countrySaved': 'Uyruk: {name}', 'profile.countryCleared': 'Uyruk kaldırıldı', 'profile.countryCloudErr': 'Uyruk bu cihazda kaydedildi ama hesaba yüklenemedi',
   // v1.1.3b
   'start.singleBull': 'Single Bull', 'start.edit': 'Düzenle', 'start.tapToMove': 'Yeni yere dokun',
+  // v1.1.4
+  'game.pausedSaved': 'Maç kaydedildi, ana ekrandan devam edebilirsin', 'home.resumeMany': 'Devam eden maçlar', 'home.justNow': 'az önce', 'home.minAgo': '{n} dk önce', 'home.hourAgo': '{n} sa önce', 'home.running': 'Şu an açık', 'home.visitsN': '{n} tur', 'gs.keepAwake': 'Ekranı açık tut', 'gs.keepAwakeSub': 'Maç sırasında ekran kararmaz', 'gs.keepAwakeNo': 'Bu tarayıcı desteklemiyor; telefonun otomatik kilit süresini uzatabilirsin',
 };
 
 const en = {
@@ -272,6 +274,8 @@ const en = {
   'profile.pickCountry': 'Choose nationality', 'profile.country': 'Nationality', 'profile.countrySearch': 'Search countries', 'profile.countryNone': 'Don\'t show a nationality', 'profile.countryNoMatch': 'No matching country', 'profile.countrySaved': 'Nationality: {name}', 'profile.countryCleared': 'Nationality removed', 'profile.countryCloudErr': 'Saved on this device, but it could not be uploaded to your account',
   // v1.1.3b
   'start.singleBull': 'Single Bull', 'start.edit': 'Edit', 'start.tapToMove': 'Tap the new spot',
+  // v1.1.4
+  'game.pausedSaved': 'Match saved – continue it from the home screen', 'home.resumeMany': 'Unfinished matches', 'home.justNow': 'just now', 'home.minAgo': '{n} min ago', 'home.hourAgo': '{n} h ago', 'home.running': 'Open now', 'home.visitsN': '{n} visits', 'gs.keepAwake': 'Keep screen on', 'gs.keepAwakeSub': 'The screen stays on during a match', 'gs.keepAwakeNo': 'Not supported by this browser; you can lengthen the phone\'s auto-lock time',
 };
 
 const DICTS = { tr, en };

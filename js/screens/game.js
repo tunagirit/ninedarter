@@ -2,7 +2,7 @@ import { html, useState, useEffect, useMemo, useRef } from '../../vendor/preact-
 import { useStore, update } from '../store.js';
 import { t } from '../i18n.js';
 import { Icon, IconBtn, Btn, Seg, Switch, Avatar, Wavy, Shape, openDialog, snack, haptic, confetti, fmt1 } from '../ui.js';
-import { pushAction, undo, go, abandonMatch } from '../match.js';
+import { pushAction, undo, go, abandonMatch, pauseActive } from '../match.js';
 import * as X01 from '../engines/x01.js';
 import * as CR from '../engines/cricket.js';
 import { atc as ATC, bobs as BOBS, checkout as CK, c121 as C121, doubles as DBL, shanghai as SHA } from '../engines/training.js';
@@ -38,7 +38,7 @@ async function exitDialog() {
       <${Btn} kind="tonal" icon="home" onClick=${() => close('later')}>${t('game.later')}<//>
       <${Btn} kind="danger" icon="delete" onClick=${() => close('abandon')}>${t('game.abandon')}<//>
     </div>`);
-  if (r === 'later') go('#/');
+  if (r === 'later') { pauseActive(); go('#/'); snack(t('game.pausedSaved')); }
   if (r === 'abandon') { abandonMatch(); go('#/'); }
 }
 
@@ -72,6 +72,7 @@ function gameSettingsDialog(a, menu) {
           <${Seg} value=${s.cricketInput === 'board' ? 'board' : 'darts'} onChange=${(v) => set('cricketInput', v)} options=${[{ value: 'darts', label: t('gs.inputPad') }, { value: 'board', label: t('gs.inputBoard') }]} /></div>`}
         <div class="list">
           ${row('vibration', t('settings.vibrate'), null, html`<${Switch} checked=${s.vibrate} onChange=${(v) => set('vibrate', v)} label=${t('settings.vibrate')} />`)}
+          ${row('light_mode', t('gs.keepAwake'), t('wakeLock' in navigator ? 'gs.keepAwakeSub' : 'gs.keepAwakeNo'), html`<${Switch} checked=${s.keepAwake !== false} onChange=${(v) => set('keepAwake', v)} label=${t('gs.keepAwake')} />`)}
           ${menu.kind === 'x01' && row('lightbulb', t('settings.hints'), t('settings.hintsSub'), html`<${Switch} checked=${s.hints} onChange=${(v) => set('hints', v)} label=${t('settings.hints')} />`)}
           ${menu.kind === 'x01' && row('ads_click', t('settings.askDoubles'), t('settings.askDoublesSub'), html`<${Switch} checked=${s.askDoubles} onChange=${(v) => set('askDoubles', v)} label=${t('settings.askDoubles')} />`)}
         </div>

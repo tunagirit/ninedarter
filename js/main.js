@@ -13,7 +13,7 @@ import { initCloud } from './cloud.js';
 import { Settings } from './screens/settings.js';
 import { FriendPage, Messages, Chat, Notifications } from './screens/social.js';
 
-export const VERSION = '1.1.3b';
+export const VERSION = '1.1.4';
 
 // PWA install prompt (Chrome/Edge/Android); Settings shows an install button when available
 window.__installPrompt = null;
@@ -57,6 +57,21 @@ function applyScale(name) {
   root.style.setProperty('--zoom', z);
 }
 
+
+// v1.1.4: keep the screen on while a match is being played (Screen Wake Lock; re-taken when the app returns)
+let wakeLock = null, wantWake = false;
+async function takeWakeLock() {
+  if (!wantWake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+  try { if (!wakeLock || wakeLock.released) wakeLock = await navigator.wakeLock.request('screen'); } catch {}
+}
+function setKeepAwake(on) {
+  wantWake = on;
+  if (on) takeWakeLock();
+  else if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', takeWakeLock);
+// some browsers only grant it after a tap
+document.addEventListener('pointerdown', () => { if (wantWake && (!wakeLock || wakeLock.released)) takeWakeLock(); }, { passive: true });
 // iOS Safari only shows :active press states when the page has a touch listener
 document.addEventListener('touchstart', () => {}, { passive: true });
 // iOS: no pinch-zoom of the app (the Display size setting replaces it)
@@ -122,7 +137,7 @@ function App() {
     case 'notifications': screen = html`<${Notifications} />`; break;
     default: screen = html`<${Home} />`;
   }
-  useEffect(() => { document.documentElement.classList.toggle('locked', full && a === 'game'); }, [full, a]);
+  useEffect(() => { document.documentElement.classList.toggle('locked', full && a === 'game'); setKeepAwake(full && a === 'game' && st.settings.keepAwake !== false); }, [full, a, st.settings.keepAwake]);
   return html`<div class=${'shell' + (full ? ' fullscreen' : '')}>
       ${!full && html`<${Nav} current=${a || ''} />`}
       <main class="main">${screen}</main>

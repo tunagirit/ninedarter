@@ -16,6 +16,7 @@ const defaults = () => ({
   players: [], // offline player database
   matches: [],
   active: null,
+  paused: [], // v1.1.4: matches left with "continue later"
   lastSetup: {},
   account: null, // {uid, email, username, avatar}
   friends: [], friendReqs: [], inbox: { convs: [], unread: 0 },
